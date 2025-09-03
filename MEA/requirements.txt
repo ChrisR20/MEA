@@ -1,0 +1,19 @@
+asgiref==3.8.1
+cffi==1.16.0
+cryptography==43.0.0
+django==4.2.23
+django-appconf==1.0.6
+django-cors-headers==4.7.0
+django-cryptography==1.1
+django-jazzmin==2.6.0
+djangorestframework==3.16.0
+gunicorn==21.2.0
+packaging==23.2
+psycopg2==2.9.9
+psycopg2-binary==2.9.9
+pycparser==2.22
+pytz==2022.6
+sqlparse==0.4.3
+typing-extensions==4.14.0
+Python 3.9.6
+4.2.23
