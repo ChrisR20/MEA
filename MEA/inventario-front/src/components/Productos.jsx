@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import NavbarPrincipal from "./NavbarPrincipal";
 import { refreshAccessToken } from "./utils/auth";
+import { isSessionValid, clearSession } from "../utils/session"; // <-- importamos las funciones de session.js
 
 function Productos() {
   const [productos, setProductos] = useState([]);
@@ -24,10 +25,18 @@ function Productos() {
 
   useEffect(() => {
     const fetchProductos = async () => {
+      // Validar sesión
+      if (!isSessionValid()) {
+        clearSession();
+        navigate("/login");
+        return;
+      }
+
       const isAuth = localStorage.getItem("isAuthenticated");
       let token = localStorage.getItem("access_token");
 
       if (isAuth !== "true" || !token) {
+        clearSession();
         navigate("/login");
         return;
       }
@@ -43,7 +52,7 @@ function Productos() {
       if (response.status === 401) {
         const newToken = await refreshAccessToken();
         if (!newToken) {
-          localStorage.clear();
+          clearSession();
           navigate("/login");
           return;
         }

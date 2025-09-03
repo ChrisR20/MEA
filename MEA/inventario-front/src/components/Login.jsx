@@ -1,7 +1,7 @@
-// Login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, TextField, Typography, Paper, Grid } from "@mui/material";
+import { setSession } from "../utils/session"; // <-- importamos sesión
 
 const Login = ({ setIsAuthenticated, setUsername }) => {
   const navigate = useNavigate();
@@ -30,6 +30,8 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
         localStorage.setItem("refresh_token", data.refresh);
         localStorage.setItem("username", username);
         localStorage.setItem("isAuthenticated", "true");
+
+        setSession(); // <-- guardamos el tiempo de expiración
 
         setUsername(username);
         setIsAuthenticated(true);

@@ -19,8 +19,8 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import NavbarPrincipal from "./NavbarPrincipal";
-
-import { refreshAccessToken } from "./utils/auth"; // Ajustá el path si es necesario
+import { refreshAccessToken } from "./utils/auth";
+import { isSessionValid, clearSession } from "../utils/session"; // <-- importamos session.js
 
 function Pedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -34,15 +34,27 @@ function Pedidos() {
     parseFloat(valor).toLocaleString("es-AR", { minimumFractionDigits: 2 });
 
   useEffect(() => {
-    const isAuth = localStorage.getItem("isAuthenticated");
-    const token = localStorage.getItem("access_token");
+    const fetchPedidos = async () => {
+      // Validar sesión
+      if (!isSessionValid()) {
+        clearSession();
+        navigate("/login");
+        return;
+      }
 
-    if (isAuth !== "true" || !token) {
-      navigate("/login");
-      return;
-    }
+      const isAuth = localStorage.getItem("isAuthenticated");
+      const token = localStorage.getItem("access_token");
 
-    cargarPedidosPendientes();
+      if (isAuth !== "true" || !token) {
+        clearSession();
+        navigate("/login");
+        return;
+      }
+
+      await cargarPedidosPendientes();
+    };
+
+    fetchPedidos();
   }, [navigate]);
 
   const getAuthHeaders = () => {
@@ -55,21 +67,16 @@ function Pedidos() {
 
   // Función genérica para hacer fetch con refresh token si hace falta
   const fetchConRefresh = async (url) => {
-    let response = await fetch(url, {
-      headers: getAuthHeaders(),
-    });
+    let response = await fetch(url, { headers: getAuthHeaders() });
 
     if (response.status === 401) {
-      // Token expirado, intento refrescar
       const newToken = await refreshAccessToken();
-
       if (!newToken) {
-        localStorage.clear();
+        clearSession();
         navigate("/login");
         return null;
       }
 
-      // Reintento con nuevo token
       response = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
@@ -105,7 +112,7 @@ function Pedidos() {
       const res = await fetchConRefresh(
         "http://127.0.0.1:8000/api/pedidos-entregados-pagados/"
       );
-      if (!res) return; // Ya redirigió en fetchConRefresh
+      if (!res) return;
 
       if (!res.ok)
         throw new Error("Error al cargar pedidos entregados y pagados");
@@ -154,17 +161,17 @@ function Pedidos() {
       sx={{
         width: "100%",
         maxWidth: {
-          xs: "95%", // en móviles ocupa casi todo
+          xs: "95%",
           sm: "90%",
           md: 1200,
           lg: 1400,
-          xl: 1600, // en pantallas muy grandes como la tuya
+          xl: 1600,
         },
         minHeight: "100vh",
         color: "#333",
         backgroundColor: "#fff",
         p: 2,
-        mx: "auto", // centrado
+        mx: "auto",
       }}
     >
       <NavbarPrincipal />

@@ -22,21 +22,20 @@ import {
 
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import InventoryIcon from "@mui/icons-material/Inventory"; // <-- Ícono caja individual
+import InventoryIcon from "@mui/icons-material/Inventory";
 
 import Productos from "./components/Productos";
 import Pedidos from "./components/Pedidos";
 import CrearPedido from "./components/CrearPedidos";
 import Login from "./components/Login";
 
+import { isSessionValid, clearSession } from "./utils/session";
+
 const mostazaColor = "#b8860b";
 
 const Layout = ({ onLogout, username }) => {
   const location = useLocation();
-
-  // Rutas donde NO se debe mostrar el AppBar
   const hideNavbarRoutes = ["/productos", "/pedidos", "/crear-pedido"];
-
   const hideNavbar =
     hideNavbarRoutes.some((path) => location.pathname.startsWith(path)) ||
     location.pathname.startsWith("/crear-pedido/");
@@ -86,7 +85,7 @@ const Dashboard = ({ username }) => (
       variant="h4"
       sx={{ color: mostazaColor, fontWeight: "bold", mb: 4 }}
     >
-      {/* Puedes poner aquí un título si quieres */}
+      Bienvenido al sistema
     </Typography>
 
     <Grid container spacing={3} justifyContent="center">
@@ -94,7 +93,7 @@ const Dashboard = ({ username }) => (
         {
           label: "Productos",
           to: "/productos",
-          icon: <InventoryIcon sx={{ ml: 1 }} />, // Ícono caja individual
+          icon: <InventoryIcon sx={{ ml: 1 }} />,
         },
         {
           label: "Pedidos",
@@ -123,24 +122,7 @@ const Dashboard = ({ username }) => (
                 alignItems: "center",
                 justifyContent: "center",
                 textDecoration: "none",
-                // Aquí forzamos que no cambie el texto ni decoración
-                "&:hover": {
-                  bgcolor: "#f4ce75",
-                  color: "white",
-                  textDecoration: "none",
-                },
-                "&:active": {
-                  color: "white",
-                  textDecoration: "none",
-                },
-                "&:visited": {
-                  color: "white",
-                  textDecoration: "none",
-                },
-                "&:focus": {
-                  color: "white",
-                  textDecoration: "none",
-                },
+                "&:hover": { bgcolor: "#f4ce75", color: "white" },
               }}
             >
               {item.label}
@@ -154,30 +136,33 @@ const Dashboard = ({ username }) => (
 );
 
 const PrivateRoute = ({ children }) => {
-  const isAuth = localStorage.getItem("isAuthenticated") === "true";
+  const isAuth =
+    localStorage.getItem("isAuthenticated") === "true" && isSessionValid();
+  if (!isAuth) clearSession();
   return isAuth ? children : <Navigate to="/login" replace />;
 };
 
 const AppWrapper = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    const storedAuth = localStorage.getItem("isAuthenticated");
+    const storedAuth = localStorage.getItem("isAuthenticated") === "true";
     const storedUsername = localStorage.getItem("username");
 
-    setIsAuthenticated(storedAuth === "true");
-    setUsername(storedUsername || "Usuario");
+    if (!storedAuth || !isSessionValid()) {
+      clearSession();
+      setIsAuthenticated(false);
+      setUsername("");
+    } else {
+      setIsAuthenticated(true);
+      setUsername(storedUsername || "Usuario");
+    }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("username");
-
+    clearSession();
     setIsAuthenticated(false);
     setUsername("");
     navigate("/login", { replace: true });
