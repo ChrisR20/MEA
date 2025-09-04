@@ -12,7 +12,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping"; // camioncito
 
-const colorPrimary = "#a36e1e";
+const colorPrimary = "#f4ce75";
 
 export default function NavbarPrincipal() {
   const navigate = useNavigate();

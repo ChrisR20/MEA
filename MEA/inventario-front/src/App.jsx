@@ -31,10 +31,16 @@ import Login from "./components/Login";
 
 import { isSessionValid, clearSession } from "./utils/session";
 
-const mostazaColor = "#b8860b";
+// 🎨 Paleta moderna y suave
+const primaryColor = "#d4af37"; // dorado elegante
+const hoverColor = "#cdaa25"; // acento hover
+const backgroundColor = "#fafafa"; // fondo muy claro
+const cardBg = "#ffffff"; // fondo de card blanco
 
+// Layout principal con botón de Crear Pedido arriba a la derecha
 const Layout = ({ onLogout, username }) => {
   const location = useLocation();
+  const navigate = useNavigate(); // <- IMPORTANTE, aquí obtenemos navigate
   const hideNavbarRoutes = ["/productos", "/pedidos", "/crear-pedido"];
   const hideNavbar =
     hideNavbarRoutes.some((path) => location.pathname.startsWith(path)) ||
@@ -44,19 +50,41 @@ const Layout = ({ onLogout, username }) => {
     <>
       <CssBaseline />
       {!hideNavbar && (
-        <AppBar position="static" sx={{ backgroundColor: mostazaColor }}>
+        <AppBar position="static" sx={{ backgroundColor: primaryColor }}>
           <Toolbar>
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
-              Bienvenido {username}
+              Hola {username}
             </Typography>
 
+            {/* Botón Crear Pedido arriba a la derecha */}
             <Button
-              color="inherit"
+              startIcon={<ShoppingCartIcon />}
+              variant="contained"
+              sx={{
+                bgcolor: hoverColor,
+                color: "white",
+                mr: 2,
+                "&:hover, &:focus, &:active": {
+                  bgcolor: hoverColor,
+                  boxShadow: "none",
+                },
+              }}
+              onClick={() => navigate("/crear-pedido")}
+            >
+              Crear Pedido
+            </Button>
+
+            <Button
+              variant="contained"
               onClick={onLogout}
               sx={{
-                borderColor: "white",
-                borderWidth: 1,
-                borderStyle: "solid",
+                bgcolor: hoverColor,
+                color: "white",
+                mr: 2,
+                "&:hover, &:focus, &:active": {
+                  bgcolor: hoverColor,
+                  boxShadow: "none",
+                },
               }}
             >
               Salir
@@ -68,7 +96,7 @@ const Layout = ({ onLogout, username }) => {
       <Box
         sx={{
           p: 3,
-          backgroundColor: "#fafafa",
+          backgroundColor: backgroundColor,
           width: "100vw",
           minHeight: "100vh",
         }}
@@ -79,62 +107,77 @@ const Layout = ({ onLogout, username }) => {
   );
 };
 
-const Dashboard = ({ username }) => (
-  <Box sx={{ textAlign: "center" }}>
-    <Typography
-      variant="h4"
-      sx={{ color: mostazaColor, fontWeight: "bold", mb: 4 }}
-    >
-      Bienvenido al sistema
-    </Typography>
+// Dashboard moderno
+const Dashboard = () => {
+  const navItems = [
+    {
+      label: "Productos",
+      to: "/productos",
+      icon: <InventoryIcon sx={{ fontSize: 40, color: primaryColor }} />,
+      type: "section",
+    },
+    {
+      label: "Pedidos",
+      to: "/pedidos",
+      icon: <LocalShippingIcon sx={{ fontSize: 40, color: primaryColor }} />,
+      type: "section",
+    },
+  ];
 
-    <Grid container spacing={3} justifyContent="center">
-      {[
-        {
-          label: "Productos",
-          to: "/productos",
-          icon: <InventoryIcon sx={{ ml: 1 }} />,
-        },
-        {
-          label: "Pedidos",
-          to: "/pedidos",
-          icon: <LocalShippingIcon sx={{ ml: 1 }} />,
-        },
-        {
-          label: "Crear Pedidos",
-          to: "/crear-pedido",
-          icon: <ShoppingCartIcon sx={{ ml: 1 }} />,
-        },
-      ].map((item, index) => (
-        <Grid item xs={12} sm={6} md={4} key={index}>
-          <Box display="flex" justifyContent="center">
+  return (
+    <Box sx={{ textAlign: "center" }}>
+      <Typography
+        variant="h4"
+        sx={{
+          color: primaryColor,
+          fontWeight: "bold",
+          mb: 4,
+          fontFamily: "Roboto, sans-serif",
+        }}
+      >
+        Bienvenido
+      </Typography>
+
+      <Grid container spacing={3} justifyContent="center">
+        {navItems.map((item, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
             <Button
               component={RouterLink}
               to={item.to}
-              variant="contained"
+              variant="outlined"
               sx={{
-                bgcolor: mostazaColor,
-                color: "white",
-                height: 100,
-                width: 250,
-                fontSize: "1.25rem",
+                bgcolor: cardBg,
+                borderColor: primaryColor,
+                borderWidth: 2,
+                borderRadius: 3,
+                height: 140,
+                width: "100%",
                 display: "flex",
-                alignItems: "center",
+                flexDirection: "column",
                 justifyContent: "center",
-                textDecoration: "none",
-                "&:hover": { bgcolor: "#f4ce75", color: "white" },
+                alignItems: "center",
+                boxShadow: 2,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  bgcolor: backgroundColor,
+                  borderColor: hoverColor,
+                  transform: "translateY(-4px)",
+                },
               }}
             >
-              {item.label}
               {item.icon}
+              <Typography sx={{ mt: 1, fontSize: "1.1rem", color: "#333" }}>
+                {item.label}
+              </Typography>
             </Button>
-          </Box>
-        </Grid>
-      ))}
-    </Grid>
-  </Box>
-);
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  );
+};
 
+// Ruta privada
 const PrivateRoute = ({ children }) => {
   const isAuth =
     localStorage.getItem("isAuthenticated") === "true" && isSessionValid();
@@ -142,6 +185,7 @@ const PrivateRoute = ({ children }) => {
   return isAuth ? children : <Navigate to="/login" replace />;
 };
 
+// App Wrapper
 const AppWrapper = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -195,7 +239,7 @@ const AppWrapper = () => {
         }
       >
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard username={username} />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/productos" element={<Productos />} />
         <Route path="/pedidos" element={<Pedidos />} />
         <Route path="/crear-pedido" element={<CrearPedido />} />
@@ -214,6 +258,7 @@ const AppWrapper = () => {
   );
 };
 
+// App principal
 export default function App() {
   return (
     <Router>
