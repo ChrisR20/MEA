@@ -217,23 +217,31 @@ function Productos() {
           color: "#333",
         }}
       >
-        <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Toolbar
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
           <TextField
             variant="outlined"
             placeholder="Buscar producto..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             size="small"
-            sx={{ maxWidth: 300, width: "100%" }}
+            sx={{ flex: "1 1 200px", minWidth: 150 }}
           />
           <Button
             variant="contained"
-            color="primary"
             onClick={handleOpenModal}
             sx={{
               bgcolor: "#a8d5ba",
               color: "#2f4f4f",
               "&:hover": { bgcolor: "#8bc39f" },
+              flex: "1 1 120px", // ancho mínimo en móvil
+              minWidth: 120,
             }}
           >
             Agregar Producto

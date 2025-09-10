@@ -18,8 +18,13 @@ import {
   Button,
   CssBaseline,
   Grid,
+  IconButton,
+  Menu,
+  MenuItem,
+  useMediaQuery,
 } from "@mui/material";
 
+import MenuIcon from "@mui/icons-material/Menu";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import InventoryIcon from "@mui/icons-material/Inventory";
@@ -37,14 +42,25 @@ const hoverColor = "#cdaa25"; // acento hover
 const backgroundColor = "#fafafa"; // fondo muy claro
 const cardBg = "#ffffff"; // fondo de card blanco
 
-// Layout principal con botón de Crear Pedido arriba a la derecha
+// Layout principal con menú responsive
 const Layout = ({ onLogout, username }) => {
   const location = useLocation();
-  const navigate = useNavigate(); // <- IMPORTANTE, aquí obtenemos navigate
+  const navigate = useNavigate();
   const hideNavbarRoutes = ["/productos", "/pedidos", "/crear-pedido"];
   const hideNavbar =
     hideNavbarRoutes.some((path) => location.pathname.startsWith(path)) ||
     location.pathname.startsWith("/crear-pedido/");
+
+  const isMobile = useMediaQuery("(max-width:600px)");
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleNavigate = (path) => {
+    navigate(path);
+    handleMenuClose();
+  };
 
   return (
     <>
@@ -56,39 +72,75 @@ const Layout = ({ onLogout, username }) => {
               Hola {username}
             </Typography>
 
-            {/* Botón Crear Pedido arriba a la derecha */}
-            <Button
-              startIcon={<ShoppingCartIcon />}
-              variant="contained"
-              sx={{
-                bgcolor: hoverColor,
-                color: "white",
-                mr: 2,
-                "&:hover, &:focus, &:active": {
-                  bgcolor: hoverColor,
-                  boxShadow: "none",
-                },
-              }}
-              onClick={() => navigate("/crear-pedido")}
-            >
-              Crear Pedido
-            </Button>
+            {isMobile ? (
+              <>
+                <IconButton
+                  edge="end"
+                  color="inherit"
+                  aria-label="menu"
+                  onClick={handleMenuOpen}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
+                  sx={{ color: "#d4af37" }} // color dorado
+                >
+                  <MenuItem
+                    onClick={() => handleNavigate("/crear-pedido")}
+                    sx={{ color: "#d4af37" }}
+                  >
+                    <ShoppingCartIcon sx={{ mr: 1, color: "#d4af37" }} />
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      onLogout();
+                      handleMenuClose();
+                    }}
+                    sx={{ color: "#d4af37" }}
+                  >
+                    Salir
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <Button
+                  startIcon={<ShoppingCartIcon />}
+                  variant="contained"
+                  sx={{
+                    bgcolor: hoverColor,
+                    color: "white",
+                    mr: 2,
+                    "&:hover, &:focus, &:active": {
+                      bgcolor: hoverColor,
+                      boxShadow: "none",
+                    },
+                  }}
+                  onClick={() => navigate("/crear-pedido")}
+                >
+                  Crear Pedido
+                </Button>
 
-            <Button
-              variant="contained"
-              onClick={onLogout}
-              sx={{
-                bgcolor: hoverColor,
-                color: "white",
-                mr: 2,
-                "&:hover, &:focus, &:active": {
-                  bgcolor: hoverColor,
-                  boxShadow: "none",
-                },
-              }}
-            >
-              Salir
-            </Button>
+                <Button
+                  variant="contained"
+                  onClick={onLogout}
+                  sx={{
+                    bgcolor: hoverColor,
+                    color: "white",
+                    mr: 2,
+                    "&:hover, &:focus, &:active": {
+                      bgcolor: hoverColor,
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Salir
+                </Button>
+              </>
+            )}
           </Toolbar>
         </AppBar>
       )}
@@ -138,38 +190,63 @@ const Dashboard = () => {
         Bienvenido
       </Typography>
 
-      <Grid container spacing={3} justifyContent="center">
+      <Grid container spacing={4} justifyContent="center">
         {navItems.map((item, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
-            <Button
-              component={RouterLink}
-              to={item.to}
-              variant="outlined"
+          <Grid item xs={12} sm={6} md={5} key={index}>
+            {/* Contenedor que fuerza tamaño exacto */}
+            <Box
               sx={{
-                bgcolor: cardBg,
-                borderColor: primaryColor,
-                borderWidth: 2,
-                borderRadius: 3,
-                height: 140,
                 width: "100%",
+                maxWidth: 300, // ancho máximo deseado
+                height: "100%",
                 display: "flex",
-                flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
-                boxShadow: 2,
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  bgcolor: backgroundColor,
-                  borderColor: hoverColor,
-                  transform: "translateY(-4px)",
-                },
+                aspectRatio: "1 / 1", // asegura cuadrado exacto
+                margin: "0 auto",
               }}
             >
-              {item.icon}
-              <Typography sx={{ mt: 1, fontSize: "1.1rem", color: "#333" }}>
-                {item.label}
-              </Typography>
-            </Button>
+              <Button
+                component={RouterLink}
+                to={item.to}
+                variant="outlined"
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRadius: 3,
+                  borderWidth: 2,
+                  borderColor: primaryColor,
+                  bgcolor: cardBg,
+                  boxShadow: 2,
+                  textTransform: "none",
+                  "&:hover": {
+                    bgcolor: backgroundColor,
+                    borderColor: hoverColor,
+                    transform: "translateY(-4px)",
+                  },
+                }}
+              >
+                <Box sx={{ fontSize: 50, color: primaryColor, maxHeight: 60 }}>
+                  {item.icon}
+                </Box>
+                <Typography
+                  sx={{
+                    mt: 1,
+                    fontSize: "1.2rem",
+                    color: "#333",
+                    textAlign: "center",
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              </Button>
+            </Box>
           </Grid>
         ))}
       </Grid>
