@@ -1,12 +1,13 @@
+// App.jsx
 import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useLocation,
-  useNavigate,
   Outlet,
+  useNavigate,
+  useLocation,
   Link as RouterLink,
 } from "react-router-dom";
 
@@ -29,34 +30,35 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import InventoryIcon from "@mui/icons-material/Inventory";
 
+import Login from "./components/Login";
 import Productos from "./components/Productos";
 import Pedidos from "./components/Pedidos";
 import CrearPedido from "./components/CrearPedidos";
-import Login from "./components/Login";
 
 import { isSessionValid, clearSession } from "./utils/session";
 
-// 🎨 Paleta moderna y suave
-const primaryColor = "#d4af37"; // dorado elegante
-const hoverColor = "#cdaa25"; // acento hover
-const backgroundColor = "#fafafa"; // fondo muy claro
-const cardBg = "#ffffff"; // fondo de card blanco
+// 🎨 Paleta de colores
+const primaryColor = "#d4af37"; // dorado
+const hoverColor = "#cdaa25";
+const backgroundColor = "#fafafa";
+const cardBg = "#ffffff";
 
-// Layout principal con menú responsive
+// ------------------------
+// Layout con Navbar
+// ------------------------
 const Layout = ({ onLogout, username }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const hideNavbarRoutes = ["/productos", "/pedidos", "/crear-pedido"];
-  const hideNavbar =
-    hideNavbarRoutes.some((path) => location.pathname.startsWith(path)) ||
-    location.pathname.startsWith("/crear-pedido/");
-
   const isMobile = useMediaQuery("(max-width:600px)");
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
+  const hideNavbarRoutes = ["/login"];
+  const hideNavbar = hideNavbarRoutes.some((path) =>
+    location.pathname.startsWith(path)
+  );
 
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
   const handleNavigate = (path) => {
     navigate(path);
     handleMenuClose();
@@ -74,32 +76,32 @@ const Layout = ({ onLogout, username }) => {
 
             {isMobile ? (
               <>
-                <IconButton
-                  edge="end"
-                  color="inherit"
-                  aria-label="menu"
-                  onClick={handleMenuOpen}
-                >
+                <IconButton edge="end" color="inherit" onClick={handleMenuOpen}>
                   <MenuIcon />
                 </IconButton>
                 <Menu
                   anchorEl={anchorEl}
                   open={Boolean(anchorEl)}
                   onClose={handleMenuClose}
-                  sx={{ color: "#d4af37" }} // color dorado
                 >
                   <MenuItem
                     onClick={() => handleNavigate("/crear-pedido")}
-                    sx={{ color: "#d4af37" }}
+                    sx={{
+                      color: primaryColor,
+                      "& .MuiSvgIcon-root": { color: primaryColor },
+                    }}
                   >
-                    <ShoppingCartIcon sx={{ mr: 1, color: "#d4af37" }} />
+                    <ShoppingCartIcon sx={{ mr: 1 }} /> Crear Pedido
                   </MenuItem>
                   <MenuItem
                     onClick={() => {
                       onLogout();
                       handleMenuClose();
                     }}
-                    sx={{ color: "#d4af37" }}
+                    sx={{
+                      color: primaryColor,
+                      "& .MuiSvgIcon-root": { color: primaryColor },
+                    }}
                   >
                     Salir
                   </MenuItem>
@@ -111,31 +113,23 @@ const Layout = ({ onLogout, username }) => {
                   startIcon={<ShoppingCartIcon />}
                   variant="contained"
                   sx={{
-                    bgcolor: hoverColor,
+                    bgcolor: primaryColor,
                     color: "white",
                     mr: 2,
-                    "&:hover, &:focus, &:active": {
-                      bgcolor: hoverColor,
-                      boxShadow: "none",
-                    },
+                    "&:hover": { bgcolor: hoverColor },
                   }}
                   onClick={() => navigate("/crear-pedido")}
                 >
                   Crear Pedido
                 </Button>
-
                 <Button
                   variant="contained"
-                  onClick={onLogout}
                   sx={{
                     bgcolor: hoverColor,
                     color: "white",
-                    mr: 2,
-                    "&:hover, &:focus, &:active": {
-                      bgcolor: hoverColor,
-                      boxShadow: "none",
-                    },
+                    "&:hover": { bgcolor: hoverColor },
                   }}
+                  onClick={onLogout}
                 >
                   Salir
                 </Button>
@@ -159,20 +153,20 @@ const Layout = ({ onLogout, username }) => {
   );
 };
 
-// Dashboard moderno
+// ------------------------
+// Dashboard
+// ------------------------
 const Dashboard = () => {
   const navItems = [
     {
       label: "Productos",
       to: "/productos",
       icon: <InventoryIcon sx={{ fontSize: 40, color: primaryColor }} />,
-      type: "section",
     },
     {
       label: "Pedidos",
       to: "/pedidos",
       icon: <LocalShippingIcon sx={{ fontSize: 40, color: primaryColor }} />,
-      type: "section",
     },
   ];
 
@@ -180,12 +174,7 @@ const Dashboard = () => {
     <Box sx={{ textAlign: "center" }}>
       <Typography
         variant="h4"
-        sx={{
-          color: primaryColor,
-          fontWeight: "bold",
-          mb: 4,
-          fontFamily: "Roboto, sans-serif",
-        }}
+        sx={{ color: primaryColor, fontWeight: "bold", mb: 4 }}
       >
         Bienvenido
       </Typography>
@@ -193,16 +182,15 @@ const Dashboard = () => {
       <Grid container spacing={4} justifyContent="center">
         {navItems.map((item, index) => (
           <Grid item xs={12} sm={6} md={5} key={index}>
-            {/* Contenedor que fuerza tamaño exacto */}
             <Box
               sx={{
                 width: "100%",
-                maxWidth: 300, // ancho máximo deseado
+                maxWidth: 300,
                 height: "100%",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                aspectRatio: "1 / 1", // asegura cuadrado exacto
+                aspectRatio: "1 / 1",
                 margin: "0 auto",
               }}
             >
@@ -230,7 +218,7 @@ const Dashboard = () => {
                   },
                 }}
               >
-                <Box sx={{ fontSize: 50, color: primaryColor, maxHeight: 60 }}>
+                <Box sx={{ fontSize: 50, color: primaryColor }}>
                   {item.icon}
                 </Box>
                 <Typography
@@ -239,8 +227,6 @@ const Dashboard = () => {
                     fontSize: "1.2rem",
                     color: "#333",
                     textAlign: "center",
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
                   }}
                 >
                   {item.label}
@@ -254,15 +240,19 @@ const Dashboard = () => {
   );
 };
 
-// Ruta privada
-const PrivateRoute = ({ children }) => {
+// ------------------------
+// Private Route Wrapper
+// ------------------------
+const PrivateRoute = () => {
   const isAuth =
     localStorage.getItem("isAuthenticated") === "true" && isSessionValid();
   if (!isAuth) clearSession();
-  return isAuth ? children : <Navigate to="/login" replace />;
+  return isAuth ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
+// ------------------------
 // App Wrapper
+// ------------------------
 const AppWrapper = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -299,6 +289,7 @@ const AppWrapper = () => {
 
   return (
     <Routes>
+      {/* Login */}
       <Route
         path="/login"
         element={
@@ -308,34 +299,36 @@ const AppWrapper = () => {
           />
         }
       />
-      <Route
-        element={
-          <PrivateRoute>
-            <Layout onLogout={handleLogout} username={username} />
-          </PrivateRoute>
-        }
-      >
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/productos" element={<Productos />} />
-        <Route path="/pedidos" element={<Pedidos />} />
-        <Route path="/crear-pedido" element={<CrearPedido />} />
-        <Route path="/crear-pedido/:pedidoId" element={<CrearPedido />} />
-        <Route
-          path="*"
-          element={
-            <Typography sx={{ mt: 4, textAlign: "center" }}>
-              Página no encontrada
-            </Typography>
-          }
-        />
+
+      {/* Rutas privadas */}
+      <Route element={<PrivateRoute />}>
+        <Route element={<Layout onLogout={handleLogout} username={username} />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/productos" element={<Productos />} />
+          <Route path="/pedidos" element={<Pedidos />} />
+          <Route path="/crear-pedido" element={<CrearPedido />} />
+          <Route path="/crear-pedido/:pedidoId" element={<CrearPedido />} />
+          <Route
+            path="*"
+            element={
+              <Typography sx={{ mt: 4, textAlign: "center" }}>
+                Página no encontrada
+              </Typography>
+            }
+          />
+        </Route>
       </Route>
+
+      {/* Redirección global */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };
 
-// App principal
+// ------------------------
+// App Principal
+// ------------------------
 export default function App() {
   return (
     <Router>

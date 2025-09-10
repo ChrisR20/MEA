@@ -1,3 +1,4 @@
+// Productos.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -51,14 +52,20 @@ function Productos() {
   const [errorMsg, setErrorMsg] = useState("");
   const [toastMsg, setToastMsg] = useState("");
 
+  // 🔹 Logout
+  const handleLogout = () => {
+    clearSession();
+    navigate("/login", { replace: true });
+  };
+
   // 🔹 Fetch productos con refresco de token
   const fetchProductos = async () => {
     if (!isSessionValid()) return handleLogout();
 
     const token = localStorage.getItem("access_token");
-    const isAuth = localStorage.getItem("isAuthenticated");
+    const isAuth = localStorage.getItem("isAuthenticated") === "true";
 
-    if (isAuth !== "true" || !token) return handleLogout();
+    if (!isAuth || !token) return handleLogout();
 
     let response = await fetch("http://127.0.0.1:8000/api/productos/", {
       method: "GET",
@@ -110,20 +117,41 @@ function Productos() {
     }
   };
 
-  // 🔹 Logout y redirección
-  const handleLogout = () => {
-    clearSession();
-    navigate("/login");
-  };
-
   useEffect(() => {
-    fetchProductos();
-    fetchMarcas();
-  }, [navigate]);
+    const checkSession = async () => {
+      if (!isSessionValid()) return handleLogout();
+
+      const token = localStorage.getItem("access_token");
+      if (!token) return handleLogout();
+
+      await fetchProductos();
+      await fetchMarcas();
+    };
+
+    checkSession();
+  }, []);
 
   // 🔹 Modal
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
+
+  const resetNuevoProducto = () => {
+    setNuevoProducto({
+      nombre_producto: "",
+      marca: "",
+      desc: "",
+      color: "",
+      aroma: "",
+      cantidad: "",
+      peso_neto: "",
+      codigo: "",
+      precio: "",
+    });
+  };
+
+  const handleChange = (e) => {
+    setNuevoProducto({ ...nuevoProducto, [e.target.name]: e.target.value });
+  };
 
   // 🔹 Guardar producto
   const handleSaveProducto = async () => {
@@ -171,24 +199,7 @@ function Productos() {
     }
   };
 
-  const resetNuevoProducto = () => {
-    setNuevoProducto({
-      nombre_producto: "",
-      marca: "",
-      desc: "",
-      color: "",
-      aroma: "",
-      cantidad: "",
-      peso_neto: "",
-      codigo: "",
-      precio: "",
-    });
-  };
-
-  const handleChange = (e) => {
-    setNuevoProducto({ ...nuevoProducto, [e.target.name]: e.target.value });
-  };
-
+  // 🔹 Filtrado
   const productosFiltrados = productos.filter((p) =>
     p.nombre_producto.toLowerCase().includes(busqueda.toLowerCase())
   );
@@ -240,7 +251,7 @@ function Productos() {
               bgcolor: "#a8d5ba",
               color: "#2f4f4f",
               "&:hover": { bgcolor: "#8bc39f" },
-              flex: "1 1 120px", // ancho mínimo en móvil
+              flex: "1 1 120px",
               minWidth: 120,
             }}
           >
@@ -253,7 +264,7 @@ function Productos() {
         Listado de Productos
       </Typography>
 
-      {/* 🔹 Tabla de productos */}
+      {/* 🔹 Tabla */}
       <TableContainer
         component={Paper}
         sx={{ maxWidth: "95%", mx: "auto", boxShadow: 3, borderRadius: 2 }}
@@ -400,39 +411,35 @@ function Productos() {
       </Dialog>
 
       {/* 🔹 Snackbars */}
-      {errorMsg && (
-        <Snackbar
-          open={Boolean(errorMsg)}
-          autoHideDuration={4000}
+      <Snackbar
+        open={Boolean(errorMsg)}
+        autoHideDuration={4000}
+        onClose={() => setErrorMsg("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
           onClose={() => setErrorMsg("")}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          severity="error"
+          sx={{ width: "100%" }}
         >
-          <Alert
-            onClose={() => setErrorMsg("")}
-            severity="error"
-            sx={{ width: "100%" }}
-          >
-            {errorMsg}
-          </Alert>
-        </Snackbar>
-      )}
+          {errorMsg}
+        </Alert>
+      </Snackbar>
 
-      {toastMsg && (
-        <Snackbar
-          open={Boolean(toastMsg)}
-          autoHideDuration={2500}
+      <Snackbar
+        open={Boolean(toastMsg)}
+        autoHideDuration={2500}
+        onClose={() => setToastMsg("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
           onClose={() => setToastMsg("")}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          severity="success"
+          sx={{ width: "100%" }}
         >
-          <Alert
-            onClose={() => setToastMsg("")}
-            severity="success"
-            sx={{ width: "100%" }}
-          >
-            {toastMsg}
-          </Alert>
-        </Snackbar>
-      )}
+          {toastMsg}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

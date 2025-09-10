@@ -20,7 +20,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import NavbarPrincipal from "./NavbarPrincipal";
 import { refreshAccessToken } from "./utils/auth";
-import { isSessionValid, clearSession } from "../utils/session"; // <-- importamos session.js
+import { isSessionValid, clearSession } from "../utils/session";
 
 function Pedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -38,7 +38,7 @@ function Pedidos() {
       // Validar sesión
       if (!isSessionValid()) {
         clearSession();
-        navigate("/login");
+        navigate("/login", { replace: true });
         return;
       }
 
@@ -47,7 +47,7 @@ function Pedidos() {
 
       if (isAuth !== "true" || !token) {
         clearSession();
-        navigate("/login");
+        navigate("/login", { replace: true });
         return;
       }
 
@@ -65,7 +65,6 @@ function Pedidos() {
     };
   };
 
-  // Función genérica para hacer fetch con refresh token si hace falta
   const fetchConRefresh = async (url) => {
     let response = await fetch(url, { headers: getAuthHeaders() });
 
@@ -73,7 +72,7 @@ function Pedidos() {
       const newToken = await refreshAccessToken();
       if (!newToken) {
         clearSession();
-        navigate("/login");
+        navigate("/login", { replace: true });
         return null;
       }
 
@@ -92,7 +91,7 @@ function Pedidos() {
     try {
       setLoading(true);
       const res = await fetchConRefresh("http://127.0.0.1:8000/api/pedidos/");
-      if (!res) return; // Ya redirigió en fetchConRefresh
+      if (!res) return;
 
       if (!res.ok) throw new Error("Error al cargar pedidos pendientes");
       const data = await res.json();
