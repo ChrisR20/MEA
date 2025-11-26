@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  # === Backend Django ===
+  backend:
+    build: .  # El directorio actual donde está tu Dockerfile para el backend
+    container_name: mea_backend
+    volumes:
+      - .:/app  # Si necesitas reflejar cambios en tiempo real en el contenedor
+    ports:
+      - "8000:8000"  # Puerto del contenedor 8000, que se mapea al puerto 8000 en tu máquina
+    env_file:
+      - ./.env  # Archivos de variables de entorno
+    depends_on:
+      - db  # Este contenedor depende de la base de datos
+
+  # === Frontend React + Vite ===
+  frontend:
+    build: ./inventario-front  # Directorio donde está el Dockerfile para el frontend
+    container_name: mea_frontend
+    volumes:
+      - ./inventario-front:/app  # Volumen para reflejar cambios en el frontend
+    ports:
+      - "5173:5173"  # Puerto del contenedor 5173, que se mapea al puerto 5173 de tu máquina
+    environment:
+      - CHOKIDAR_USEPOLLING=true  # Necesario para que Vite funcione en Docker
+
+  # === Base de datos PostgreSQL ===
+  db:
+    image: postgres:16  # Usamos la imagen oficial de PostgreSQL
+    container_name: mea_postgres
+    restart: always  # Reinicia el contenedor si falla
+    environment:
+      POSTGRES_USER: mea_user  # Usuario para PostgreSQL
+      POSTGRES_PASSWORD: Choripan1324  # Contraseña para PostgreSQL
+      POSTGRES_DB: inventario  # Nombre de la base de datos
+    ports:
+      - "5432:5432"  # Mapea el puerto 5432 en el contenedor al puerto 5432 de tu máquina
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Volumen persistente para los datos
+
+# === Volúmenes persistentes ===
+volumes:
+  pgdata:  # Volumen para guardar los datos de PostgreSQL de forma persistente

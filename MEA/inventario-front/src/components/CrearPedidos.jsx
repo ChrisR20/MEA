@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; 
+
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AppBar,
@@ -15,14 +16,12 @@ import {
   TextField,
   Checkbox,
   FormControlLabel,
-  Stack,
   Alert,
   Snackbar,
 } from "@mui/material";
-import { ArrowBack, Delete } from "@mui/icons-material";
+import { Delete } from "@mui/icons-material";
 import NavbarPrincipal from "./NavbarPrincipal";
-
-import { refreshAccessToken } from "./utils/auth"; // Ajustá el path según corresponda
+import { refreshAccessToken } from "./utils/auth";
 
 const colorPrimary = "#c5892a";
 
@@ -55,7 +54,6 @@ function CrearPedido() {
   const formatoARS = (valor) =>
     parseFloat(valor).toLocaleString("es-AR", { minimumFractionDigits: 2 });
 
-  // Función para obtener headers con token Bearer
   const getAuthHeaders = () => {
     const token = localStorage.getItem("access_token");
     return {
@@ -64,25 +62,19 @@ function CrearPedido() {
     };
   };
 
-  // Función para fetch con refresh token si recibe 401
   const fetchConRefresh = async (url, options = {}) => {
     let res = await fetch(url, {
       ...options,
-      headers: {
-        ...getAuthHeaders(),
-        ...(options.headers || {}),
-      },
+      headers: { ...getAuthHeaders(), ...(options.headers || {}) },
     });
 
     if (res.status === 401) {
-      // Intentar refrescar token
       const newToken = await refreshAccessToken();
       if (!newToken) {
         localStorage.clear();
         navigate("/login");
         return null;
       }
-      // Reintentar con nuevo token
       res = await fetch(url, {
         ...options,
         headers: {
@@ -94,6 +86,7 @@ function CrearPedido() {
     return res;
   };
 
+  // ---------------- CARGAR CLIENTES Y PRODUCTOS ----------------
   useEffect(() => {
     const isAuth = localStorage.getItem("isAuthenticated");
     const token = localStorage.getItem("access_token");
@@ -102,13 +95,10 @@ function CrearPedido() {
       return;
     }
 
-    // Cargar clientes y productos paralelamente con token
     const cargarClientes = async () => {
       try {
-        const res = await fetchConRefresh(
-          "http://127.0.0.1:8000/api/clientes/"
-        );
-        if (!res) return; // Ya redirigió
+        const res = await fetchConRefresh("http://127.0.0.1:8000/api/clientes/");
+        if (!res) return;
         if (!res.ok) throw new Error("Error al cargar clientes");
         const data = await res.json();
         setClientes(data);
@@ -120,9 +110,7 @@ function CrearPedido() {
 
     const cargarProductos = async () => {
       try {
-        const res = await fetchConRefresh(
-          "http://127.0.0.1:8000/api/productos/"
-        );
+        const res = await fetchConRefresh("http://127.0.0.1:8000/api/productos/");
         if (!res) return;
         if (!res.ok) throw new Error("Error al cargar productos");
         const data = await res.json();
@@ -137,6 +125,7 @@ function CrearPedido() {
     cargarProductos();
   }, [navigate]);
 
+  // ---------------- CARGAR PEDIDO PARA EDITAR ----------------
   useEffect(() => {
     if (!pedidoId) {
       setCuotas([
@@ -160,12 +149,7 @@ function CrearPedido() {
         setPago(data.pago);
         setNota(data.nota || "");
         setEntregado(Boolean(data.entregado));
-        setPagado(
-          data.pagado === true ||
-            data.pagado === "true" ||
-            data.pagado === 1 ||
-            data.pagado === "1"
-        );
+        setPagado(Boolean(data.pagado));
         setTipoPago(data.tipo_pago || "unico");
 
         const productosIniciales =
@@ -176,6 +160,7 @@ function CrearPedido() {
                 precio_unitario: parseFloat(p.precio_unitario) || 0,
               }))
             : [{ producto: "", cantidad: 1, precio_unitario: 0 }];
+
         setProductosPedido(productosIniciales);
         setProductosOriginales(JSON.parse(JSON.stringify(productosIniciales)));
 
@@ -187,12 +172,6 @@ function CrearPedido() {
               pagado: c.pagado,
             }))
           );
-        } else {
-          setCuotas([
-            { numero: 1, monto: "", pagado: false },
-            { numero: 2, monto: "", pagado: false },
-            { numero: 3, monto: "", pagado: false },
-          ]);
         }
       } catch (err) {
         console.error(err);
@@ -203,38 +182,30 @@ function CrearPedido() {
     cargarPedido();
   }, [pedidoId]);
 
+  // ---------------- HANDLE PRODUCTOS ----------------
   const handleProductoChange = (index, field, value) => {
     setProductosPedido((prevProductos) => {
-      const nuevosProductos = [...prevProductos];
+      const nuevos = [...prevProductos];
       if (field === "producto") {
-        nuevosProductos[index] = { ...nuevosProductos[index], [field]: value };
-        const productoSeleccionado = productos.find(
-          (prod) => prod.id === parseInt(value)
-        );
-        nuevosProductos[index].precio_unitario = productoSeleccionado
-          ? parseFloat(productoSeleccionado.precio)
-          : 0;
+        nuevos[index].producto = value;
+        const prod = productos.find((p) => p.id === parseInt(value));
+        nuevos[index].precio_unitario = prod ? parseFloat(prod.precio) : 0;
       } else if (field === "cantidad") {
-        nuevosProductos[index] = {
-          ...nuevosProductos[index],
-          [field]: parseInt(value) || 1,
-        };
+        nuevos[index].cantidad = parseInt(value) || 1;
       }
-      return nuevosProductos;
+      return nuevos;
     });
   };
 
   const agregarProducto = () => {
-    setProductosPedido((prevProductos) => [
-      ...prevProductos,
+    setProductosPedido((prev) => [
+      ...prev,
       { producto: "", cantidad: 1, precio_unitario: 0 },
     ]);
   };
 
   const eliminarProducto = (index) => {
-    setProductosPedido((prevProductos) =>
-      prevProductos.filter((_, i) => i !== index)
-    );
+    setProductosPedido((prev) => prev.filter((_, i) => i !== index));
   };
 
   const productosModificados = () => {
@@ -245,13 +216,13 @@ function CrearPedido() {
       if (
         parseInt(p1.producto) !== parseInt(p2.producto) ||
         parseInt(p1.cantidad) !== parseInt(p2.cantidad)
-      ) {
+      )
         return true;
-      }
     }
     return false;
   };
 
+  // ---------------- CALCULOS ----------------
   const calcularMontoTotal = () => {
     return productosPedido.reduce((acc, p) => {
       const subtotal = p.precio_unitario * p.cantidad;
@@ -259,45 +230,38 @@ function CrearPedido() {
     }, 0);
   };
 
-  const montoPagadoCuotas = () => {
-    return cuotas.reduce((acc, c) => {
-      const monto = parseFloat(c.monto);
-      return acc + (isNaN(monto) ? 0 : monto);
-    }, 0);
-  };
+  const montoPagadoCuotas = () =>
+    cuotas.reduce(
+      (acc, c) => acc + (isNaN(parseFloat(c.monto)) ? 0 : parseFloat(c.monto)),
+      0
+    );
 
   const montoPendiente = () => {
-    const montoTotal = calcularMontoTotal();
+    const total = calcularMontoTotal();
     if (tipoPago === "unico") {
-      const pagoNum = parseFloat(pago);
-      const pendiente = montoTotal - (isNaN(pagoNum) ? 0 : pagoNum);
-      return pendiente > 0 ? formatoARS(pendiente) : formatoARS(0);
-    } else if (tipoPago === "cuotas") {
-      const pagado = montoPagadoCuotas();
-      const pendiente = montoTotal - pagado;
-      return pendiente > 0 ? formatoARS(pendiente) : formatoARS(0);
+      const pagoNum = parseFloat(pago) || 0;
+      return formatoARS(Math.max(total - pagoNum, 0));
     }
-    return formatoARS(0);
+    const pagado = montoPagadoCuotas();
+    return formatoARS(Math.max(total - pagado, 0));
   };
 
   const handleCuotaChange = (index, field, value) => {
-    setCuotas((prevCuotas) => {
-      const nuevasCuotas = [...prevCuotas];
-      if (field === "monto") {
-        nuevasCuotas[index].monto = value;
-      } else if (field === "pagado") {
-        nuevasCuotas[index].pagado = value;
-      }
-      return nuevasCuotas;
+    setCuotas((prev) => {
+      const nuevas = [...prev];
+      if (field === "monto") nuevas[index].monto = value;
+      else if (field === "pagado") nuevas[index].pagado = value;
+      return nuevas;
     });
   };
 
+  // ---------------- SUBMIT ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const payload = {
       cliente: parseInt(clienteSeleccionado),
-      pago: tipoPago === "unico" ? parseFloat(pago) : 0,
+      pago: tipoPago === "unico" ? parseFloat(pago) || 0 : 0,
       nota,
       entregado,
       pagado,
@@ -317,47 +281,27 @@ function CrearPedido() {
         monto: parseFloat(c.monto) || 0,
         pagado: c.pagado,
       }));
-    } else {
-      payload.pago = parseFloat(pago);
     }
 
     const url = pedidoId
       ? `http://127.0.0.1:8000/api/pedidos/${pedidoId}/`
       : "http://127.0.0.1:8000/api/pedidos/";
-
     const method = pedidoId ? "PATCH" : "POST";
 
     try {
       const res = await fetchConRefresh(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!res) return; // Ya redirigió en fetchConRefresh
 
       if (!res.ok) {
         const errorData = await res.json();
         const mensajes = [];
         for (const campo in errorData) {
           const valor = errorData[campo];
-          if (Array.isArray(valor)) {
-            valor.forEach((msg) => {
-              mensajes.push(
-                ["non_field_errors", "productos"].includes(campo)
-                  ? msg
-                  : `${campo}: ${msg}`
-              );
-            });
-          } else if (typeof valor === "string") {
-            mensajes.push(
-              ["non_field_errors", "productos"].includes(campo)
-                ? valor
-                : `${campo}: ${valor}`
-            );
-          }
+          if (Array.isArray(valor)) valor.forEach((msg) => mensajes.push(msg));
+          else if (typeof valor === "string") mensajes.push(valor);
         }
         throw new Error(mensajes.join(" | "));
       }
@@ -381,6 +325,7 @@ function CrearPedido() {
   const montoTotal = calcularMontoTotal();
   const cuotaSugerida = (montoTotal / 3).toFixed(2);
 
+  // ---------------- RENDER ----------------
   return (
     <Box
       sx={{
@@ -394,7 +339,6 @@ function CrearPedido() {
         boxSizing: "border-box",
       }}
     >
-      {/* Navbar */}
       <NavbarPrincipal />
 
       <Box
@@ -406,12 +350,16 @@ function CrearPedido() {
           backgroundColor: "#fff",
           p: 4,
           boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-          fontFamily: "'Montserrat', sans-serif",
           boxSizing: "border-box",
         }}
         noValidate
       >
-        <Typography variant="h5" component="h2" fontWeight={600} mb={3}>
+        <Typography
+          variant="h5"
+          fontWeight={600}
+          mb={3}
+          textAlign="center"
+        >
           {pedidoId ? "Edita tu Pedido" : "Crea un nuevo pedido"}
         </Typography>
 
@@ -421,30 +369,47 @@ function CrearPedido() {
           </Alert>
         )}
 
-        {/* Cliente */}
+        {/* CLIENTE */}
         <FormControl fullWidth margin="normal" required>
           <InputLabel id="cliente-label">Cliente</InputLabel>
           <Select
             labelId="cliente-label"
-            id="cliente"
             value={clienteSeleccionado}
-            label="Cliente"
             onChange={(e) => {
               setClienteSeleccionado(e.target.value);
               setErrorGeneral("");
+            }}
+            sx={{
+              "& .MuiSelect-select": {
+                maxWidth: "100%",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              },
             }}
           >
             <MenuItem value="">
               <em>Selecciona un cliente</em>
             </MenuItem>
+
             {clientes.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
+              <MenuItem
+                key={c.id}
+                value={c.id}
+                sx={{
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {c.nombre}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
+        {/* PRODUCTOS */}
         <Box mt={4}>
           <Typography variant="subtitle1" fontWeight={600} mb={2}>
             Productos
@@ -453,12 +418,13 @@ function CrearPedido() {
           {productosPedido.map((p, index) => (
             <Grid
               container
-              spacing={2}
+              spacing={1}
               alignItems="center"
               key={index}
               sx={{ mb: 2 }}
             >
-              <Grid item xs={7} sm={6}>
+              {/* PRODUCTO */}
+              <Grid item xs={6}>
                 <FormControl fullWidth required>
                   <InputLabel id={`producto-label-${index}`}>
                     Producto
@@ -466,27 +432,46 @@ function CrearPedido() {
                   <Select
                     labelId={`producto-label-${index}`}
                     value={p.producto}
-                    label="Producto"
                     onChange={(e) =>
                       handleProductoChange(index, "producto", e.target.value)
                     }
+                    sx={{
+                      "& .MuiSelect-select": {
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      },
+                    }}
                   >
                     <MenuItem value="">
                       <em>Selecciona un producto</em>
                     </MenuItem>
+
                     {productos.map((prod) => (
-                      <MenuItem key={prod.id} value={prod.id}>
-                        {prod.nombre_producto}
+                      <MenuItem
+                        key={prod.id}
+                        value={prod.id}
+                        sx={{
+                          maxWidth: "100%",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {prod.nombre_producto} - {prod.desc}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Grid>
 
-              <Grid item xs={3} sm={3}>
+              {/* CANTIDAD */}
+              <Grid item xs={2.5}>
                 <TextField
                   type="number"
-                  label="Cantidad"
+                  label="Cant."
+                  sx={{ width: '60px' }}
                   inputProps={{ min: 1 }}
                   value={p.cantidad}
                   onChange={(e) =>
@@ -496,30 +481,27 @@ function CrearPedido() {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={2}
-                sm={3}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography
-                  variant="body1"
-                  fontWeight={600}
-                  sx={{ whiteSpace: "nowrap" }}
-                >
+              {/* PRECIO */}
+              <Grid item xs={3}>
+                <Typography fontWeight={600} textAlign="center">
                   ${formatoARS(p.precio_unitario)}
                 </Typography>
+              </Grid>
+
+              {/* ELIMINAR */}
+              <Grid
+                item
+                xs={1.5}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
                 {productosPedido.length > 1 && (
                   <IconButton
                     color="error"
-                    aria-label="eliminar producto"
                     onClick={() => eliminarProducto(index)}
                     size="small"
-                    sx={{ ml: 1 }}
                   >
                     <Delete fontSize="small" />
                   </IconButton>
@@ -551,21 +533,27 @@ function CrearPedido() {
             fontWeight={700}
             mt={3}
             textAlign="right"
-            color="text.primary"
           >
             Monto Total: ${formatoARS(montoTotal)}
           </Typography>
         </Box>
 
+        {/* TIPO DE PAGO */}
         <Box mt={4}>
           <FormControl fullWidth required>
             <InputLabel id="tipo-pago-label">Forma de pago</InputLabel>
             <Select
               labelId="tipo-pago-label"
-              id="tipoPago"
               value={tipoPago}
-              label="Forma de pago"
               onChange={(e) => setTipoPago(e.target.value)}
+              sx={{
+                "& .MuiSelect-select": {
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  textOverflow: "ellipsis",
+                },
+              }}
             >
               <MenuItem value="unico">Pago único</MenuItem>
               <MenuItem value="cuotas">3 cuotas</MenuItem>
@@ -573,6 +561,7 @@ function CrearPedido() {
           </FormControl>
         </Box>
 
+        {/* PAGO ÚNICO */}
         {tipoPago === "unico" && (
           <Box mt={3}>
             <TextField
@@ -589,11 +578,13 @@ function CrearPedido() {
           </Box>
         )}
 
+        {/* CUOTAS */}
         {tipoPago === "cuotas" && (
           <Box mt={3}>
             <Typography variant="subtitle1" fontWeight={600} mb={2}>
               Cuotas
             </Typography>
+
             {cuotas.map((cuota, index) => (
               <Grid
                 container
@@ -603,7 +594,7 @@ function CrearPedido() {
                 mb={1}
               >
                 <Grid item xs={4}>
-                  <Typography variant="body1">Cuota {cuota.numero}</Typography>
+                  <Typography>Cuota {cuota.numero}</Typography>
                 </Grid>
                 <Grid item xs={4}>
                   <TextField
@@ -633,13 +624,13 @@ function CrearPedido() {
                 </Grid>
               </Grid>
             ))}
-
-            <Typography variant="body2" color="text.secondary" mt={1}>
+            <Typography color="text.secondary" mt={1}>
               Monto pendiente: ${montoPendiente()}
             </Typography>
           </Box>
         )}
 
+        {/* NOTAS */}
         <Box mt={3}>
           <TextField
             label="Notas"
@@ -652,6 +643,7 @@ function CrearPedido() {
           />
         </Box>
 
+        {/* CHECKBOXES */}
         <Box mt={3} display="flex" justifyContent="space-between">
           <FormControlLabel
             control={
@@ -688,9 +680,9 @@ function CrearPedido() {
         autoHideDuration={2500}
         onClose={() => setToastMsg("")}
         message={toastMsg}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }} // lo forzamos acá
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
         sx={{
-          top: "50% !important", // Forzamos la posición
+          top: "50% !important",
           left: "50% !important",
           transform: "translate(-50%, -50%) !important",
         }}

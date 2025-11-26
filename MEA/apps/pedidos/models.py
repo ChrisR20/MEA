@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 
-from apps.clientes.models  import Cliente
+from apps.clientes.models import Cliente
 from apps.productos.models import Stock
 
 
@@ -25,13 +25,14 @@ class Pedido(models.Model):
     nota = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True)
     entregado = models.BooleanField(default=False)
-    pagado = models.BooleanField(default=False)
+    pagado = models.BooleanField(default=False)  # SOLO se modifica manualmente desde la API/UI
     estado = models.ForeignKey(PedidoEstado, on_delete=models.PROTECT, default=1)
     tipo_pago = models.CharField(max_length=10, choices=TIPO_PAGO_CHOICES, default='unico')
 
     def actualizar_monto_total(self):
         total = sum([pp.precio_total() for pp in self.productos.all()])
         self.monto_total = total
+        # No modificamos 'pagado' automáticamente aquí
         self.save(update_fields=['monto_total'])
 
     @property
@@ -39,14 +40,15 @@ class Pedido(models.Model):
         return sum(c.monto for c in self.cuotas.filter(pagado=True))
 
     def actualizar_pago_desde_cuotas(self):
+        """
+        Actualiza únicamente el campo 'pago' con la suma de cuotas pagadas.
+        NO modifica el flag 'pagado' — ese debe ser controlado manualmente.
+        """
         if self.tipo_pago == 'cuotas':
             total_cuotas = self.total_pagado_cuotas
-            # Actualizar el pago con la suma de cuotas pagadas
             self.pago = total_cuotas
-            # Actualizar estado 'pagado' según si cubre el total
-            self.pagado = (self.monto_total > 0 and total_cuotas >= self.monto_total)
-            self.save(update_fields=['pago', 'pagado'])
-            self.actualizar_estado()
+            self.save(update_fields=['pago'])
+            # No cambiamos self.pagado aquí.
 
     @property
     def monto_pendiente(self):
@@ -58,14 +60,19 @@ class Pedido(models.Model):
         return pedido_producto.cantidad if pedido_producto else 0
 
     def actualizar_estado(self):
+        """
+        Actualiza el estado según los flags actuales pagado y entregado.
+        'estado_id' cambia solo si ambos flags indican 'completado'.
+        No modifica el flag 'pagado' ni otros campos.
+        """
         if self.pagado and self.entregado:
             self.estado_id = 2  # estado "completado"
         else:
             self.estado_id = 1  # estado "pendiente"
-        self.save(update_fields=['pagado', 'estado_id'])
+        self.save(update_fields=['estado_id'])
 
     def save(self, *args, **kwargs):
-        # Simple save sin doble llamada ni manipulación de force_insert
+        # Guardado simple; lógica de negocio (pagado/entregado) debe venir desde la API/UI
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -102,13 +109,24 @@ class CuotaPago(models.Model):
         ordering = ['numero']
 
     def save(self, *args, **kwargs):
+        """
+        Guardamos la cuota y actualizamos el campo 'pago' del pedido (suma de cuotas pagadas).
+        NO modificamos el flag 'pagado' del pedido automáticamente.
+        """
         super().save(*args, **kwargs)
-        self.pedido.actualizar_pago_desde_cuotas()
+        # Actualizar solo el campo pago del pedido (suma de cuotas pagadas)
+        try:
+            self.pedido.actualizar_pago_desde_cuotas()
+        except Exception:
+            # evitar que errores en actualización de pedido rompan la creación de la cuota
+            pass
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        self.pedido.actualizar_pago_desde_cuotas()
-        self.pedido.actualizar_estado()
+        try:
+            self.pedido.actualizar_pago_desde_cuotas()
+        except Exception:
+            pass
 
     def __str__(self):
         estado = "Pagado" if self.pagado else "Pendiente"

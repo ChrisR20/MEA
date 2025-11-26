@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, TextField, Typography, Paper, Grid } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, Grid, Avatar, InputAdornment, IconButton } from "@mui/material";
 import { setSession } from "../utils/session"; // <-- importamos sesión
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Login = ({ setIsAuthenticated, setUsername }) => {
   const navigate = useNavigate();
   const [username, setUsernameInput] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // Estado para controlar la visibilidad
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,6 +46,9 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
     }
   };
 
+  // Función para alternar la visibilidad de la contraseña
+  const handleClickShowPassword = () => setShowPassword((prev) => !prev);
+
   return (
     <Grid
       container
@@ -74,6 +79,12 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
             alignItems: "center",
           }}
         >
+          {/* Agregar el logo aquí */}
+          <Avatar
+            alt="Logo"
+            src="http://localhost:8000/static/img/logo.jpeg"
+            sx={{ width: 150, height: 150, mb: 2 }}
+          />
           <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
             Iniciar sesión
           </Typography>
@@ -95,11 +106,23 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
               fullWidth
               name="password"
               label="Contraseña"
-              type="password"
+              type={showPassword ? "text" : "password"} // Controlamos el tipo de input
               id="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleClickShowPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             {error && (
               <Typography color="error" sx={{ mt: 1 }}>

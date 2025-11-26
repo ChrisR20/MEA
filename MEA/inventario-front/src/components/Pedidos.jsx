@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import React, { useState, useEffect } from "react"; 
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -18,6 +19,7 @@ import {
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
+
 import NavbarPrincipal from "./NavbarPrincipal";
 import { refreshAccessToken } from "./utils/auth";
 import { isSessionValid, clearSession } from "../utils/session";
@@ -28,14 +30,16 @@ function Pedidos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mostrarEntregados, setMostrarEntregados] = useState(false);
+
   const navigate = useNavigate();
 
   const formatoARS = (valor) =>
-    parseFloat(valor).toLocaleString("es-AR", { minimumFractionDigits: 2 });
+    parseFloat(valor).toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+    });
 
   useEffect(() => {
     const fetchPedidos = async () => {
-      // Validar sesión
       if (!isSessionValid()) {
         clearSession();
         navigate("/login", { replace: true });
@@ -70,6 +74,7 @@ function Pedidos() {
 
     if (response.status === 401) {
       const newToken = await refreshAccessToken();
+
       if (!newToken) {
         clearSession();
         navigate("/login", { replace: true });
@@ -90,10 +95,12 @@ function Pedidos() {
   const cargarPedidosPendientes = async () => {
     try {
       setLoading(true);
+
       const res = await fetchConRefresh("http://127.0.0.1:8000/api/pedidos/");
       if (!res) return;
 
       if (!res.ok) throw new Error("Error al cargar pedidos pendientes");
+
       const data = await res.json();
       setPedidos(data);
       setMostrarEntregados(false);
@@ -108,13 +115,14 @@ function Pedidos() {
   const cargarPedidosEntregadosPagados = async () => {
     try {
       setLoading(true);
+
       const res = await fetchConRefresh(
         "http://127.0.0.1:8000/api/pedidos-entregados-pagados/"
       );
       if (!res) return;
 
-      if (!res.ok)
-        throw new Error("Error al cargar pedidos entregados y pagados");
+      if (!res.ok) throw new Error("Error al cargar pedidos entregados y pagados");
+
       const data = await res.json();
       setPedidos(data);
       setMostrarEntregados(true);
@@ -127,9 +135,7 @@ function Pedidos() {
   };
 
   const toggleFiltro = () => {
-    mostrarEntregados
-      ? cargarPedidosPendientes()
-      : cargarPedidosEntregadosPagados();
+    mostrarEntregados ? cargarPedidosPendientes() : cargarPedidosEntregadosPagados();
   };
 
   const pedidosFiltrados = pedidos.filter((pedido) =>
@@ -159,13 +165,7 @@ function Pedidos() {
     <Box
       sx={{
         width: "100%",
-        maxWidth: {
-          xs: "95%",
-          sm: "90%",
-          md: 1200,
-          lg: 1400,
-          xl: 1600,
-        },
+        maxWidth: { xs: "95%", sm: "90%", md: 1200, lg: 1400, xl: 1600 },
         minHeight: "100vh",
         color: "#333",
         backgroundColor: "#fff",
@@ -238,9 +238,7 @@ function Pedidos() {
         align="center"
         sx={{ my: 4, fontWeight: 600, color: "#333" }}
       >
-        {mostrarEntregados
-          ? "Pedidos Entregados y Pagados"
-          : "Pedidos Pendientes"}
+        {mostrarEntregados ? "Pedidos Entregados y Pagados" : "Pedidos Pendientes"}
       </Typography>
 
       <TableContainer
@@ -250,6 +248,7 @@ function Pedidos() {
         <Table aria-label="tabla de pedidos">
           <TableHead sx={{ bgcolor: "#eae7a4" }}>
             <TableRow>
+              <TableCell sx={{ fontWeight: "bold" }}>Nº Pedido</TableCell>
               <TableCell sx={{ fontWeight: "bold" }}>Cliente</TableCell>
               <TableCell sx={{ fontWeight: "bold" }}>Pago</TableCell>
               <TableCell sx={{ fontWeight: "bold" }}>Debe</TableCell>
@@ -271,10 +270,12 @@ function Pedidos() {
             {pedidosFiltrados.length > 0 ? (
               pedidosFiltrados.map((pedido) => (
                 <TableRow key={pedido.id} hover>
+                  <TableCell>{pedido.id}</TableCell>
                   <TableCell>{pedido.cliente_nombre}</TableCell>
                   <TableCell>${formatoARS(pedido.pago_actual)}</TableCell>
                   <TableCell>${formatoARS(pedido.monto_pendiente)}</TableCell>
                   <TableCell>${formatoARS(pedido.monto_total)}</TableCell>
+
                   <TableCell>
                     {pedido.cantidad_cuotas > 0 ? (
                       pedido.cuotas.map((cuota) => (
@@ -287,58 +288,61 @@ function Pedidos() {
                       <Box>Pago único</Box>
                     )}
                   </TableCell>
+
                   <TableCell>{pedido.nota || "-"}</TableCell>
+
                   <TableCell>
                     {new Date(pedido.fecha).toLocaleDateString()}
                   </TableCell>
+
                   <TableCell align="center" sx={{ fontSize: "1.25rem" }}>
                     {pedido.entregado ? (
-                      <CheckCircleOutlineIcon
-                        color="success"
-                        aria-label="Entregado"
-                      />
+                      <CheckCircleOutlineIcon color="success" />
                     ) : (
-                      <CancelOutlinedIcon
-                        color="error"
-                        aria-label="No entregado"
-                      />
+                      <CancelOutlinedIcon color="error" />
                     )}
                   </TableCell>
+
                   <TableCell align="center" sx={{ fontSize: "1.25rem" }}>
                     {pedido.pagado ? (
-                      <CheckCircleOutlineIcon
-                        color="success"
-                        aria-label="Pagado"
-                      />
+                      <CheckCircleOutlineIcon color="success" />
                     ) : (
-                      <CancelOutlinedIcon
-                        color="error"
-                        aria-label="No pagado"
-                      />
+                      <CancelOutlinedIcon color="error" />
                     )}
                   </TableCell>
+
+                  {/* --------------- ACCIONES (EDITAR + DETALLE) --------------- */}
                   <TableCell>
-                    {pedido.entregado && pedido.pagado ? (
+                    <Stack direction="row" spacing={1}>
+                      {pedido.entregado && pedido.pagado ? (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          disabled
+                          title="No editable al estar entregado"
+                        >
+                          Editar
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => navigate(`/crear-pedido/${pedido.id}`)}
+                        >
+                          Editar
+                        </Button>
+                      )}
+
                       <Button
                         variant="outlined"
                         size="small"
-                        disabled
-                        title="No editable al estar entregado"
+                        onClick={() => navigate(`/pedido-detalle/${pedido.id}`)}
                       >
-                        Editar
+                        Detalle
                       </Button>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        color="warning"
-                        onClick={() => navigate(`/crear-pedido/${pedido.id}`)}
-                        aria-label={`Editar pedido ${pedido.id}`}
-                      >
-                        Editar
-                      </Button>
-                    )}
+                    </Stack>
                   </TableCell>
+
                 </TableRow>
               ))
             ) : (

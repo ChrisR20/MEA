@@ -1,4 +1,6 @@
 // Productos.jsx
+import React from 'react'; // Añadir React aquí
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -49,16 +51,17 @@ function Productos() {
     codigo: "",
     precio: "",
   });
+  const [productoEditar, setProductoEditar] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [toastMsg, setToastMsg] = useState("");
 
-  // 🔹 Logout
+  // Logout
   const handleLogout = () => {
     clearSession();
     navigate("/login", { replace: true });
   };
 
-  // 🔹 Fetch productos con refresco de token
+  // Fetch productos
   const fetchProductos = async () => {
     if (!isSessionValid()) return handleLogout();
 
@@ -97,7 +100,7 @@ function Productos() {
     }
   };
 
-  // 🔹 Fetch marcas
+  // Fetch marcas
   const fetchMarcas = async () => {
     const token = localStorage.getItem("access_token");
     const response = await fetch("http://127.0.0.1:8000/api/marcas/", {
@@ -131,9 +134,14 @@ function Productos() {
     checkSession();
   }, []);
 
-  // 🔹 Modal
+  // Modal manejo
   const handleOpenModal = () => setOpenModal(true);
-  const handleCloseModal = () => setOpenModal(false);
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setProductoEditar(null);
+    resetNuevoProducto();
+    setErrorMsg("");
+  };
 
   const resetNuevoProducto = () => {
     setNuevoProducto({
@@ -153,44 +161,68 @@ function Productos() {
     setNuevoProducto({ ...nuevoProducto, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Guardar producto
+  const handleEditProducto = (p) => {
+    setProductoEditar(p);
+    setNuevoProducto({
+      nombre_producto: p.nombre_producto,
+      marca: p.marca,
+      desc: p.desc,
+      color: p.color,
+      aroma: p.aroma,
+      cantidad: p.cantidad,
+      peso_neto: p.peso_neto,
+      codigo: p.codigo,
+      precio: p.precio,
+    });
+    handleOpenModal();
+  };
+
   const handleSaveProducto = async () => {
     const token = localStorage.getItem("access_token");
 
     const productoEnviar = {
       ...nuevoProducto,
-      codigo:
-        nuevoProducto.codigo === "" ? null : parseInt(nuevoProducto.codigo, 10),
-      cantidad:
-        nuevoProducto.cantidad === ""
-          ? null
-          : parseInt(nuevoProducto.cantidad, 10),
-      precio:
-        nuevoProducto.precio === "" ? null : parseFloat(nuevoProducto.precio),
+      codigo: nuevoProducto.codigo === "" ? null : parseInt(nuevoProducto.codigo, 10),
+      cantidad: nuevoProducto.cantidad === "" ? null : parseInt(nuevoProducto.cantidad, 10),
+      precio: nuevoProducto.precio === "" ? null : parseFloat(nuevoProducto.precio),
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/productos/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(productoEnviar),
-      });
+      let response;
+      if (productoEditar) {
+        response = await fetch(
+          `http://127.0.0.1:8000/api/productos/${productoEditar.id}/`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(productoEnviar),
+          }
+        );
+      } else {
+        response = await fetch("http://127.0.0.1:8000/api/productos/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(productoEnviar),
+        });
+      }
 
       if (response.ok) {
         await fetchProductos();
         handleCloseModal();
-        resetNuevoProducto();
-        setToastMsg("Producto creado correctamente");
+        setToastMsg(productoEditar ? "Producto editado correctamente" : "Producto creado correctamente");
         setErrorMsg("");
       } else {
         const errorData = await response.json();
         const mensajeError =
           errorData.non_field_errors?.[0] ||
           errorData?.nombre_producto?.[0] ||
-          "Error al crear producto";
+          "Error al guardar producto";
         setErrorMsg(mensajeError);
       }
     } catch (err) {
@@ -199,7 +231,6 @@ function Productos() {
     }
   };
 
-  // 🔹 Filtrado
   const productosFiltrados = productos.filter((p) =>
     p.nombre_producto.toLowerCase().includes(busqueda.toLowerCase())
   );
@@ -218,7 +249,7 @@ function Productos() {
     >
       <NavbarPrincipal />
 
-      {/* 🔹 Barra superior */}
+      {/* Barra superior */}
       <AppBar
         position="static"
         elevation={0}
@@ -244,6 +275,7 @@ function Productos() {
             size="small"
             sx={{ flex: "1 1 200px", minWidth: 150 }}
           />
+
           <Button
             variant="contained"
             onClick={handleOpenModal}
@@ -264,7 +296,7 @@ function Productos() {
         Listado de Productos
       </Typography>
 
-      {/* 🔹 Tabla */}
+      {/* Tabla */}
       <TableContainer
         component={Paper}
         sx={{ maxWidth: "95%", mx: "auto", boxShadow: 3, borderRadius: 2 }}
@@ -282,6 +314,7 @@ function Productos() {
                 "Código",
                 "Precio",
                 "Marca",
+                "Acciones",
               ].map((header) => (
                 <TableCell key={header} sx={{ fontWeight: "bold" }}>
                   {header}
@@ -289,10 +322,11 @@ function Productos() {
               ))}
             </TableRow>
           </TableHead>
+
           <TableBody>
             {productosFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} align="center">
+                <TableCell colSpan={10} align="center">
                   No se encontraron productos
                 </TableCell>
               </TableRow>
@@ -313,6 +347,15 @@ function Productos() {
                     })}
                   </TableCell>
                   <TableCell>{p.marca_nombre}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleEditProducto(p)}
+                    >
+                      Editar
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -320,16 +363,20 @@ function Productos() {
         </Table>
       </TableContainer>
 
-      {/* 🔹 Modal */}
-      <Dialog
-        open={openModal}
-        onClose={handleCloseModal}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Agregar Nuevo Producto</DialogTitle>
+      {/* Modal */}
+      <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ textAlign: "center" }}>
+          {productoEditar ? "Editar Producto" : "Agregar Nuevo Producto"}
+        </DialogTitle>
+
         <DialogContent
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            maxHeight: "60vh",
+            overflowY: "auto",
+          }}
         >
           <TextField
             label="Nombre Producto"
@@ -337,6 +384,7 @@ function Productos() {
             value={nuevoProducto.nombre_producto}
             onChange={handleChange}
           />
+
           <FormControl fullWidth>
             <InputLabel id="marca-label">Marca</InputLabel>
             <Select
@@ -352,76 +400,32 @@ function Productos() {
               ))}
             </Select>
           </FormControl>
-          <TextField
-            label="Descripción"
-            name="desc"
-            value={nuevoProducto.desc}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Color"
-            name="color"
-            value={nuevoProducto.color}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Aroma"
-            name="aroma"
-            value={nuevoProducto.aroma}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Cantidad"
-            type="number"
-            name="cantidad"
-            value={nuevoProducto.cantidad}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Peso Neto"
-            name="peso_neto"
-            value={nuevoProducto.peso_neto}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Código"
-            type="number"
-            name="codigo"
-            value={nuevoProducto.codigo}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Precio"
-            type="number"
-            name="precio"
-            value={nuevoProducto.precio}
-            onChange={handleChange}
-          />
+
+          <TextField label="Descripción" name="desc" value={nuevoProducto.desc} onChange={handleChange} />
+          <TextField label="Color" name="color" value={nuevoProducto.color} onChange={handleChange} />
+          <TextField label="Aroma" name="aroma" value={nuevoProducto.aroma} onChange={handleChange} />
+          <TextField label="Cantidad" type="number" name="cantidad" value={nuevoProducto.cantidad} onChange={handleChange} />
+          <TextField label="Peso Neto" name="peso_neto" value={nuevoProducto.peso_neto} onChange={handleChange} />
+          <TextField label="Código" type="number" name="codigo" value={nuevoProducto.codigo} onChange={handleChange} />
+          <TextField label="Precio" type="number" name="precio" value={nuevoProducto.precio} onChange={handleChange} />
         </DialogContent>
+
         <DialogActions>
           <Button onClick={handleCloseModal}>Cancelar</Button>
-          <Button
-            onClick={handleSaveProducto}
-            variant="contained"
-            color="primary"
-          >
+          <Button onClick={handleSaveProducto} variant="contained" color="primary">
             Guardar
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 🔹 Snackbars */}
+      {/* Snackbars */}
       <Snackbar
         open={Boolean(errorMsg)}
         autoHideDuration={4000}
         onClose={() => setErrorMsg("")}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setErrorMsg("")}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={() => setErrorMsg("")} severity="error" sx={{ width: "100%" }}>
           {errorMsg}
         </Alert>
       </Snackbar>
@@ -432,11 +436,7 @@ function Productos() {
         onClose={() => setToastMsg("")}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setToastMsg("")}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={() => setToastMsg("")} severity="success" sx={{ width: "100%" }}>
           {toastMsg}
         </Alert>
       </Snackbar>

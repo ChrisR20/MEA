@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key-para-de
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 # Hosts permitidos (para producción podés leer del .env)
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']  # Para desarrollo con Docker
 
 # Aplicaciones instaladas
 INSTALLED_APPS = [

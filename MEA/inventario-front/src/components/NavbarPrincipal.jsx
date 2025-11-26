@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   AppBar,
   Toolbar,
@@ -10,7 +11,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import InventoryIcon from "@mui/icons-material/Inventory";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping"; // camioncito
+import LocalShippingIcon from "@mui/icons-material/LocalShipping"; 
+import PersonIcon from "@mui/icons-material/Person"; // ← ICONO DE PERSONA
 
 const colorPrimary = "#f4ce75";
 
@@ -21,8 +23,9 @@ export default function NavbarPrincipal() {
 
   const navItems = [
     { label: "Inicio", path: "/", icon: <HomeIcon /> },
-    { label: "Pedidos", path: "/pedidos", icon: <LocalShippingIcon /> }, // camioncito para pedidos
+    { label: "Pedidos", path: "/pedidos", icon: <LocalShippingIcon /> },
     { label: "Productos", path: "/productos", icon: <InventoryIcon /> },
+    { label: "Clientes", path: "/clientes", icon: <PersonIcon /> }, // ← NUEVO ITEM
   ];
 
   return (

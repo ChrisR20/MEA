@@ -1,5 +1,6 @@
 // App.jsx
 import React, { useEffect, useState } from "react";
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,7 +9,6 @@ import {
   Outlet,
   useNavigate,
   useLocation,
-  Link as RouterLink,
 } from "react-router-dom";
 
 import {
@@ -19,21 +19,21 @@ import {
   Button,
   CssBaseline,
   Grid,
-  IconButton,
-  Menu,
-  MenuItem,
-  useMediaQuery,
+  Card,
+  CardContent,
 } from "@mui/material";
 
-import MenuIcon from "@mui/icons-material/Menu";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import InventoryIcon from "@mui/icons-material/Inventory";
+import PeopleIcon from "@mui/icons-material/People";
 
 import Login from "./components/Login";
 import Productos from "./components/Productos";
 import Pedidos from "./components/Pedidos";
 import CrearPedido from "./components/CrearPedidos";
+import PedidoDetalle from "./components/PedidoDetalle";   // 🔥 IMPORTANTE
+import Clientes from "./components/Clientes";
 
 import { isSessionValid, clearSession } from "./utils/session";
 
@@ -49,20 +49,11 @@ const cardBg = "#ffffff";
 const Layout = ({ onLogout, username }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery("(max-width:600px)");
-  const [anchorEl, setAnchorEl] = useState(null);
 
   const hideNavbarRoutes = ["/login"];
   const hideNavbar = hideNavbarRoutes.some((path) =>
     location.pathname.startsWith(path)
   );
-
-  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
-  const handleNavigate = (path) => {
-    navigate(path);
-    handleMenuClose();
-  };
 
   return (
     <>
@@ -74,67 +65,17 @@ const Layout = ({ onLogout, username }) => {
               Hola {username}
             </Typography>
 
-            {isMobile ? (
-              <>
-                <IconButton edge="end" color="inherit" onClick={handleMenuOpen}>
-                  <MenuIcon />
-                </IconButton>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
-                  onClose={handleMenuClose}
-                >
-                  <MenuItem
-                    onClick={() => handleNavigate("/crear-pedido")}
-                    sx={{
-                      color: primaryColor,
-                      "& .MuiSvgIcon-root": { color: primaryColor },
-                    }}
-                  >
-                    <ShoppingCartIcon sx={{ mr: 1 }} /> Crear Pedido
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      onLogout();
-                      handleMenuClose();
-                    }}
-                    sx={{
-                      color: primaryColor,
-                      "& .MuiSvgIcon-root": { color: primaryColor },
-                    }}
-                  >
-                    Salir
-                  </MenuItem>
-                </Menu>
-              </>
-            ) : (
-              <>
-                <Button
-                  startIcon={<ShoppingCartIcon />}
-                  variant="contained"
-                  sx={{
-                    bgcolor: primaryColor,
-                    color: "white",
-                    mr: 2,
-                    "&:hover": { bgcolor: hoverColor },
-                  }}
-                  onClick={() => navigate("/crear-pedido")}
-                >
-                  Crear Pedido
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{
-                    bgcolor: hoverColor,
-                    color: "white",
-                    "&:hover": { bgcolor: hoverColor },
-                  }}
-                  onClick={onLogout}
-                >
-                  Salir
-                </Button>
-              </>
-            )}
+            <Button
+              variant="contained"
+              sx={{
+                bgcolor: hoverColor,
+                color: "white",
+                "&:hover": { bgcolor: hoverColor },
+              }}
+              onClick={onLogout}
+            >
+              Salir
+            </Button>
           </Toolbar>
         </AppBar>
       )}
@@ -154,85 +95,88 @@ const Layout = ({ onLogout, username }) => {
 };
 
 // ------------------------
-// Dashboard
+// Dashboard (moderno)
 // ------------------------
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   const navItems = [
     {
       label: "Productos",
+      subtitle: "Ver y gestionar inventario",
       to: "/productos",
       icon: <InventoryIcon sx={{ fontSize: 40, color: primaryColor }} />,
     },
     {
       label: "Pedidos",
+      subtitle: "Ver y crear pedidos",
       to: "/pedidos",
       icon: <LocalShippingIcon sx={{ fontSize: 40, color: primaryColor }} />,
+    },
+    {
+      label: "Clientes",
+      subtitle: "Lista de clientes",
+      to: "/clientes",
+      icon: <PeopleIcon sx={{ fontSize: 40, color: primaryColor }} />,
     },
   ];
 
   return (
-    <Box sx={{ textAlign: "center" }}>
-      <Typography
-        variant="h4"
-        sx={{ color: primaryColor, fontWeight: "bold", mb: 4 }}
-      >
-        Bienvenido
-      </Typography>
-
-      <Grid container spacing={4} justifyContent="center">
+    <Box sx={{ textAlign: "center", py: 4 }}>
+      <Grid container spacing={3} justifyContent="center">
         {navItems.map((item, index) => (
-          <Grid item xs={12} sm={6} md={5} key={index}>
-            <Box
+          <Grid item key={index}>
+            <Card
+              onClick={() => navigate(item.to)}
               sx={{
-                width: "100%",
-                maxWidth: 300,
-                height: "100%",
+                width: 250,
+                height: 250,
+                backgroundColor: cardBg,
+                borderRadius: "20px",
+                boxShadow: "0 6px 14px rgba(0,0,0,0.08)",
+                transition: "all 0.25s ease",
+                cursor: "pointer",
                 display: "flex",
+                flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
-                aspectRatio: "1 / 1",
-                margin: "0 auto",
+                textAlign: "center",
+                "&:hover": {
+                  transform: "translateY(-6px)",
+                  boxShadow: "0 10px 22px rgba(0,0,0,0.12)",
+                },
               }}
             >
-              <Button
-                component={RouterLink}
-                to={item.to}
-                variant="outlined"
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 3,
-                  borderWidth: 2,
-                  borderColor: primaryColor,
-                  bgcolor: cardBg,
-                  boxShadow: 2,
-                  textTransform: "none",
-                  "&:hover": {
-                    bgcolor: backgroundColor,
-                    borderColor: hoverColor,
-                    transform: "translateY(-4px)",
-                  },
-                }}
-              >
-                <Box sx={{ fontSize: 50, color: primaryColor }}>
+              <CardContent>
+                <Box
+                  sx={{
+                    backgroundColor: `${primaryColor}15`,
+                    borderRadius: "50%",
+                    width: 80,
+                    height: 80,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    mb: 2,
+                    mx: "auto",
+                  }}
+                >
                   {item.icon}
                 </Box>
                 <Typography
-                  sx={{
-                    mt: 1,
-                    fontSize: "1.2rem",
-                    color: "#333",
-                    textAlign: "center",
-                  }}
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "#333", mb: 1 }}
                 >
                   {item.label}
                 </Typography>
-              </Button>
-            </Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "gray", fontSize: "0.9rem" }}
+                >
+                  {item.subtitle}
+                </Typography>
+              </CardContent>
+            </Card>
           </Grid>
         ))}
       </Grid>
@@ -289,7 +233,6 @@ const AppWrapper = () => {
 
   return (
     <Routes>
-      {/* Login */}
       <Route
         path="/login"
         element={
@@ -300,7 +243,6 @@ const AppWrapper = () => {
         }
       />
 
-      {/* Rutas privadas */}
       <Route element={<PrivateRoute />}>
         <Route element={<Layout onLogout={handleLogout} username={username} />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -309,6 +251,8 @@ const AppWrapper = () => {
           <Route path="/pedidos" element={<Pedidos />} />
           <Route path="/crear-pedido" element={<CrearPedido />} />
           <Route path="/crear-pedido/:pedidoId" element={<CrearPedido />} />
+          <Route path="/pedido-detalle/:id" element={<PedidoDetalle />} />
+          <Route path="/clientes" element={<Clientes />} />
           <Route
             path="*"
             element={
@@ -320,7 +264,6 @@ const AppWrapper = () => {
         </Route>
       </Route>
 
-      {/* Redirección global */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
