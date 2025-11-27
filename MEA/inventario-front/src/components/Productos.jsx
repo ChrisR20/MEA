@@ -1,8 +1,7 @@
 // Productos.jsx
-import React from 'react'; // Añadir React aquí
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -27,133 +26,127 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-} from "@mui/material";
+  Stack,
+} from '@mui/material';
 
-import NavbarPrincipal from "./NavbarPrincipal";
-import { refreshAccessToken } from "./utils/auth";
-import { isSessionValid, clearSession } from "../utils/session";
+import NavbarPrincipal from './NavbarPrincipal';
+import { refreshAccessToken } from './utils/auth';
+import { isSessionValid, clearSession } from '../utils/session';
 
 function Productos() {
   const navigate = useNavigate();
 
   const [productos, setProductos] = useState([]);
   const [marcas, setMarcas] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useState('');
   const [openModal, setOpenModal] = useState(false);
-  const [nuevoProducto, setNuevoProducto] = useState({
-    nombre_producto: "",
-    marca: "",
-    desc: "",
-    color: "",
-    aroma: "",
-    cantidad: "",
-    peso_neto: "",
-    codigo: "",
-    precio: "",
-  });
+  const [errorMsg, setErrorMsg] = useState('');
+  const [toastMsg, setToastMsg] = useState('');
   const [productoEditar, setProductoEditar] = useState(null);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [toastMsg, setToastMsg] = useState("");
 
-  // Logout
+  const [nuevoProducto, setNuevoProducto] = useState({
+    nombre_producto: '',
+    marca: '',
+    desc: '',
+    color: '',
+    aroma: '',
+    cantidad: '',
+    peso_neto: '',
+    codigo: '',
+    precio: '',
+  });
+
+  // --- Manejo de Logout ---
   const handleLogout = () => {
     clearSession();
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
   };
 
-  // Fetch productos
+  // --- Fetch Productos ---
   const fetchProductos = async () => {
     if (!isSessionValid()) return handleLogout();
 
-    const token = localStorage.getItem("access_token");
-    const isAuth = localStorage.getItem("isAuthenticated") === "true";
+    const token = localStorage.getItem('access_token');
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
 
     if (!isAuth || !token) return handleLogout();
 
-    let response = await fetch("http://127.0.0.1:8000/api/productos/", {
-      method: "GET",
+    let res = await fetch('http://127.0.0.1:8000/api/productos/', {
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     });
 
-    if (response.status === 401) {
+    if (res.status === 401) {
       const newToken = await refreshAccessToken();
       if (!newToken) return handleLogout();
 
-      response = await fetch("http://127.0.0.1:8000/api/productos/", {
-        method: "GET",
+      res = await fetch('http://127.0.0.1:8000/api/productos/', {
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${newToken}`,
         },
       });
     }
 
-    if (response.ok) {
-      const data = await response.json();
+    if (res.ok) {
+      const data = await res.json();
       setProductos(Array.isArray(data) ? data : []);
     } else {
-      console.error("Error al cargar productos:", response.status);
       setProductos([]);
     }
   };
 
-  // Fetch marcas
+  // --- Fetch Marcas ---
   const fetchMarcas = async () => {
-    const token = localStorage.getItem("access_token");
-    const response = await fetch("http://127.0.0.1:8000/api/marcas/", {
-      method: "GET",
+    const token = localStorage.getItem('access_token');
+    const res = await fetch('http://127.0.0.1:8000/api/marcas/', {
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      setMarcas(data);
+    if (res.ok) {
+      setMarcas(await res.json());
     } else {
-      console.error("Error al cargar marcas:", response.status);
       setMarcas([]);
     }
   };
 
   useEffect(() => {
-    const checkSession = async () => {
+    const init = async () => {
       if (!isSessionValid()) return handleLogout();
-
-      const token = localStorage.getItem("access_token");
-      if (!token) return handleLogout();
-
       await fetchProductos();
       await fetchMarcas();
     };
 
-    checkSession();
+    init();
   }, []);
 
-  // Modal manejo
+  // -------------------------
+  // MODAL
+  // -------------------------
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => {
     setOpenModal(false);
     setProductoEditar(null);
     resetNuevoProducto();
-    setErrorMsg("");
+    setErrorMsg('');
   };
 
   const resetNuevoProducto = () => {
     setNuevoProducto({
-      nombre_producto: "",
-      marca: "",
-      desc: "",
-      color: "",
-      aroma: "",
-      cantidad: "",
-      peso_neto: "",
-      codigo: "",
-      precio: "",
+      nombre_producto: '',
+      marca: '',
+      desc: '',
+      color: '',
+      aroma: '',
+      cantidad: '',
+      peso_neto: '',
+      codigo: '',
+      precio: '',
     });
   };
 
@@ -163,71 +156,59 @@ function Productos() {
 
   const handleEditProducto = (p) => {
     setProductoEditar(p);
-    setNuevoProducto({
-      nombre_producto: p.nombre_producto,
-      marca: p.marca,
-      desc: p.desc,
-      color: p.color,
-      aroma: p.aroma,
-      cantidad: p.cantidad,
-      peso_neto: p.peso_neto,
-      codigo: p.codigo,
-      precio: p.precio,
-    });
+    setNuevoProducto({ ...p });
     handleOpenModal();
   };
 
+  // --------------------------
+  // GUARDAR PRODUCTO
+  // --------------------------
   const handleSaveProducto = async () => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem('access_token');
 
-    const productoEnviar = {
+    const body = {
       ...nuevoProducto,
-      codigo: nuevoProducto.codigo === "" ? null : parseInt(nuevoProducto.codigo, 10),
-      cantidad: nuevoProducto.cantidad === "" ? null : parseInt(nuevoProducto.cantidad, 10),
-      precio: nuevoProducto.precio === "" ? null : parseFloat(nuevoProducto.precio),
+      codigo: nuevoProducto.codigo ? parseInt(nuevoProducto.codigo) : null,
+      cantidad: nuevoProducto.cantidad ? parseInt(nuevoProducto.cantidad) : null,
+      precio: nuevoProducto.precio ? parseFloat(nuevoProducto.precio) : null,
     };
 
+    let res;
     try {
-      let response;
       if (productoEditar) {
-        response = await fetch(
-          `http://127.0.0.1:8000/api/productos/${productoEditar.id}/`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(productoEnviar),
-          }
-        );
-      } else {
-        response = await fetch("http://127.0.0.1:8000/api/productos/", {
-          method: "POST",
+        res = await fetch(`http://127.0.0.1:8000/api/productos/${productoEditar.id}/`, {
+          method: 'PUT',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(productoEnviar),
+          body: JSON.stringify(body),
+        });
+      } else {
+        res = await fetch('http://127.0.0.1:8000/api/productos/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
         });
       }
 
-      if (response.ok) {
+      if (res.ok) {
         await fetchProductos();
         handleCloseModal();
-        setToastMsg(productoEditar ? "Producto editado correctamente" : "Producto creado correctamente");
-        setErrorMsg("");
+        setToastMsg(productoEditar ? 'Producto editado correctamente' : 'Producto creado');
       } else {
-        const errorData = await response.json();
-        const mensajeError =
+        const errorData = await res.json();
+        setErrorMsg(
           errorData.non_field_errors?.[0] ||
-          errorData?.nombre_producto?.[0] ||
-          "Error al guardar producto";
-        setErrorMsg(mensajeError);
+            errorData.nombre_producto?.[0] ||
+            'Error al guardar producto'
+        );
       }
     } catch (err) {
-      console.error(err);
-      setErrorMsg("Error al comunicarse con el servidor");
+      setErrorMsg('Error al comunicarse con el servidor');
     }
   };
 
@@ -235,89 +216,95 @@ function Productos() {
     p.nombre_producto.toLowerCase().includes(busqueda.toLowerCase())
   );
 
+  // ===============================================================
+  //  RENDER (MISMA ESTRUCTURA QUE PEDIDOS)
+  // ===============================================================
   return (
     <Box
       sx={{
-        width: "100%",
-        maxWidth: 1600,
-        minHeight: "100vh",
-        color: "#333",
-        backgroundColor: "#fff",
+        width: '100%',
+        maxWidth: { xs: '95%', sm: '90%', md: 1200, lg: 1400, xl: 1600 },
+        minHeight: '100vh',
+        backgroundColor: '#fff',
         p: 2,
-        mx: "auto",
+        mx: 'auto',
       }}
     >
       <NavbarPrincipal />
 
-      {/* Barra superior */}
+      {/* APPBAR IGUAL QUE PEDIDOS */}
       <AppBar
         position="static"
         elevation={0}
         sx={{
-          backgroundColor: "#fff",
-          borderBottom: "1px solid #ddd",
-          color: "#333",
+          backgroundColor: '#ffffff',
+          borderBottom: '1px solid #ddd',
+          color: '#333',
         }}
       >
-        <Toolbar
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 1,
-          }}
-        >
-          <TextField
-            variant="outlined"
-            placeholder="Buscar producto..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            size="small"
-            sx={{ flex: "1 1 200px", minWidth: 150 }}
-          />
-
-          <Button
-            variant="contained"
-            onClick={handleOpenModal}
-            sx={{
-              bgcolor: "#a8d5ba",
-              color: "#2f4f4f",
-              "&:hover": { bgcolor: "#8bc39f" },
-              flex: "1 1 120px",
-              minWidth: 120,
-            }}
+        <Toolbar>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ width: '100%' }}
           >
-            Agregar Producto
-          </Button>
+            {/* Botón agregar */}
+            <Button
+              variant="contained"
+              onClick={handleOpenModal}
+              sx={{
+                bgcolor: '#a8d5ba',
+                color: '#2f4f4f',
+                '&:hover': { bgcolor: '#8bc39f' },
+                width: 150,
+                paddingY: 0.6,
+              }}
+            >
+              Agregar Producto
+            </Button>
+
+            {/* Buscador */}
+            <TextField
+              variant="outlined"
+              placeholder="Buscar producto..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              size="small"
+              sx={{ maxWidth: 300, width: '100%' }}
+            />
+          </Stack>
         </Toolbar>
       </AppBar>
 
+      {/* TÍTULO */}
       <Typography variant="h4" align="center" sx={{ my: 4, fontWeight: 600 }}>
         Listado de Productos
       </Typography>
 
-      {/* Tabla */}
+      {/* TABLA (Misma estructura visual que Pedidos) */}
       <TableContainer
         component={Paper}
-        sx={{ maxWidth: "95%", mx: "auto", boxShadow: 3, borderRadius: 2 }}
+        sx={{ maxWidth: '95%', mx: 'auto', boxShadow: 3, borderRadius: 2 }}
       >
-        <Table aria-label="tabla de productos">
-          <TableHead sx={{ bgcolor: "#eae7a4" }}>
+        <Table>
+          <TableHead sx={{ bgcolor: '#eae7a4' }}>
             <TableRow>
               {[
-                "Producto",
-                "Descripción",
-                "Color",
-                "Aroma",
-                "Cantidad",
-                "Peso Neto",
-                "Código",
-                "Precio",
-                "Marca",
-                "Acciones",
-              ].map((header) => (
-                <TableCell key={header} sx={{ fontWeight: "bold" }}>
-                  {header}
+                'Producto',
+                'Descripción',
+                'Color',
+                'Aroma',
+                'Cantidad',
+                'Peso Neto',
+                'Código',
+                'Precio',
+                'Marca',
+                'Acciones',
+              ].map((h) => (
+                <TableCell key={h} sx={{ fontWeight: 'bold' }}>
+                  {h}
                 </TableCell>
               ))}
             </TableRow>
@@ -335,26 +322,20 @@ function Productos() {
                 <TableRow key={p.id} hover>
                   <TableCell>{p.nombre_producto}</TableCell>
                   <TableCell>{p.desc}</TableCell>
-                  <TableCell>{p.color || "-"}</TableCell>
-                  <TableCell>{p.aroma || "-"}</TableCell>
-                  <TableCell>{p.cantidad}</TableCell>
-                  <TableCell>{p.peso_neto || "-"}</TableCell>
-                  <TableCell>{p.codigo || "-"}</TableCell>
+                  <TableCell>{p.color || '-'}</TableCell>
+                  <TableCell>{p.aroma || '-'}</TableCell>
+                  <TableCell>{p.cantidad || '-'}</TableCell>
+                  <TableCell>{p.peso_neto || '-'}</TableCell>
+                  <TableCell>{p.codigo || '-'}</TableCell>
+                  <TableCell>${p.precio}</TableCell>
+                  <TableCell>{p.marca}</TableCell>
+
                   <TableCell>
-                    $
-                    {parseFloat(p.precio).toLocaleString("es-AR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell>{p.marca_nombre}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleEditProducto(p)}
-                    >
-                      Editar
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Button variant="outlined" size="small" onClick={() => handleEditProducto(p)}>
+                        Editar
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))
@@ -362,84 +343,6 @@ function Productos() {
           </TableBody>
         </Table>
       </TableContainer>
-
-      {/* Modal */}
-      <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ textAlign: "center" }}>
-          {productoEditar ? "Editar Producto" : "Agregar Nuevo Producto"}
-        </DialogTitle>
-
-        <DialogContent
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            maxHeight: "60vh",
-            overflowY: "auto",
-          }}
-        >
-          <TextField
-            label="Nombre Producto"
-            name="nombre_producto"
-            value={nuevoProducto.nombre_producto}
-            onChange={handleChange}
-          />
-
-          <FormControl fullWidth>
-            <InputLabel id="marca-label">Marca</InputLabel>
-            <Select
-              labelId="marca-label"
-              name="marca"
-              value={nuevoProducto.marca}
-              onChange={handleChange}
-            >
-              {marcas.map((m) => (
-                <MenuItem key={m.id} value={m.id}>
-                  {m.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField label="Descripción" name="desc" value={nuevoProducto.desc} onChange={handleChange} />
-          <TextField label="Color" name="color" value={nuevoProducto.color} onChange={handleChange} />
-          <TextField label="Aroma" name="aroma" value={nuevoProducto.aroma} onChange={handleChange} />
-          <TextField label="Cantidad" type="number" name="cantidad" value={nuevoProducto.cantidad} onChange={handleChange} />
-          <TextField label="Peso Neto" name="peso_neto" value={nuevoProducto.peso_neto} onChange={handleChange} />
-          <TextField label="Código" type="number" name="codigo" value={nuevoProducto.codigo} onChange={handleChange} />
-          <TextField label="Precio" type="number" name="precio" value={nuevoProducto.precio} onChange={handleChange} />
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleCloseModal}>Cancelar</Button>
-          <Button onClick={handleSaveProducto} variant="contained" color="primary">
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbars */}
-      <Snackbar
-        open={Boolean(errorMsg)}
-        autoHideDuration={4000}
-        onClose={() => setErrorMsg("")}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert onClose={() => setErrorMsg("")} severity="error" sx={{ width: "100%" }}>
-          {errorMsg}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={Boolean(toastMsg)}
-        autoHideDuration={2500}
-        onClose={() => setToastMsg("")}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert onClose={() => setToastMsg("")} severity="success" sx={{ width: "100%" }}>
-          {toastMsg}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }
