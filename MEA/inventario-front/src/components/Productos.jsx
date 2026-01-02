@@ -121,7 +121,6 @@ function Productos() {
       await fetchProductos();
       await fetchMarcas();
     };
-
     init();
   }, []);
 
@@ -151,12 +150,22 @@ function Productos() {
   };
 
   const handleChange = (e) => {
-    setNuevoProducto({ ...nuevoProducto, [e.target.name]: e.target.value });
+    let value = e.target.value;
+
+    // Si es marca, convertir a número
+    if (e.target.name === 'marca') {
+      value = parseInt(value, 10);
+    }
+
+    setNuevoProducto({ ...nuevoProducto, [e.target.name]: value });
   };
 
   const handleEditProducto = (p) => {
     setProductoEditar(p);
-    setNuevoProducto({ ...p });
+    setNuevoProducto({
+      ...p,
+      marca: p.marca?.id || p.marca || '', // Asegura ID numérico
+    });
     handleOpenModal();
   };
 
@@ -167,10 +176,15 @@ function Productos() {
     const token = localStorage.getItem('access_token');
 
     const body = {
-      ...nuevoProducto,
-      codigo: nuevoProducto.codigo ? parseInt(nuevoProducto.codigo) : null,
-      cantidad: nuevoProducto.cantidad ? parseInt(nuevoProducto.cantidad) : null,
-      precio: nuevoProducto.precio ? parseFloat(nuevoProducto.precio) : null,
+      nombre_producto: nuevoProducto.nombre_producto || '',
+      marca: nuevoProducto.marca || null, // Ya es número
+      desc: nuevoProducto.desc || '',
+      color: nuevoProducto.color || '',
+      aroma: nuevoProducto.aroma || '',
+      cantidad: nuevoProducto.cantidad ? parseInt(nuevoProducto.cantidad) : 0,
+      peso_neto: nuevoProducto.peso_neto || '',
+      codigo: nuevoProducto.codigo ? parseInt(nuevoProducto.codigo) : 0,
+      precio: nuevoProducto.precio ? parseFloat(nuevoProducto.precio) : 0,
     };
 
     let res;
@@ -204,6 +218,7 @@ function Productos() {
         setErrorMsg(
           errorData.non_field_errors?.[0] ||
             errorData.nombre_producto?.[0] ||
+            errorData.marca?.[0] ||
             'Error al guardar producto'
         );
       }
@@ -216,9 +231,9 @@ function Productos() {
     p.nombre_producto.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  // ===============================================================
-  //  RENDER (MISMA ESTRUCTURA QUE PEDIDOS)
-  // ===============================================================
+  // -------------------------
+  // RENDER
+  // -------------------------
   return (
     <Box
       sx={{
@@ -232,15 +247,11 @@ function Productos() {
     >
       <NavbarPrincipal />
 
-      {/* APPBAR IGUAL QUE PEDIDOS */}
+      {/* APPBAR */}
       <AppBar
         position="static"
         elevation={0}
-        sx={{
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #ddd',
-          color: '#333',
-        }}
+        sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid #ddd', color: '#333' }}
       >
         <Toolbar>
           <Stack
@@ -250,7 +261,6 @@ function Productos() {
             justifyContent="space-between"
             sx={{ width: '100%' }}
           >
-            {/* Botón agregar */}
             <Button
               variant="contained"
               onClick={handleOpenModal}
@@ -265,7 +275,6 @@ function Productos() {
               Agregar Producto
             </Button>
 
-            {/* Buscador */}
             <TextField
               variant="outlined"
               placeholder="Buscar producto..."
@@ -278,12 +287,10 @@ function Productos() {
         </Toolbar>
       </AppBar>
 
-      {/* TÍTULO */}
       <Typography variant="h4" align="center" sx={{ my: 4, fontWeight: 600 }}>
         Listado de Productos
       </Typography>
 
-      {/* TABLA (Misma estructura visual que Pedidos) */}
       <TableContainer
         component={Paper}
         sx={{ maxWidth: '95%', mx: 'auto', boxShadow: 3, borderRadius: 2 }}
@@ -309,7 +316,6 @@ function Productos() {
               ))}
             </TableRow>
           </TableHead>
-
           <TableBody>
             {productosFiltrados.length === 0 ? (
               <TableRow>
@@ -328,8 +334,7 @@ function Productos() {
                   <TableCell>{p.peso_neto || '-'}</TableCell>
                   <TableCell>{p.codigo || '-'}</TableCell>
                   <TableCell>${p.precio}</TableCell>
-                  <TableCell>{p.marca}</TableCell>
-
+                  <TableCell>{p.marca_nombre || '-'}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
                       <Button variant="outlined" size="small" onClick={() => handleEditProducto(p)}>
@@ -343,6 +348,103 @@ function Productos() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* MODAL */}
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+        <DialogTitle>{productoEditar ? 'Editar Producto' : 'Agregar Producto'}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <FormControl fullWidth>
+              {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
+              <InputLabel>Marca</InputLabel>
+              <Select name="marca" value={nuevoProducto.marca} onChange={handleChange}>
+                {marcas.map((m) => (
+                  <MenuItem key={m.id} value={m.id}>
+                    {m.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Nombre"
+              name="nombre_producto"
+              value={nuevoProducto.nombre_producto}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Descripción"
+              name="desc"
+              value={nuevoProducto.desc}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Color"
+              name="color"
+              value={nuevoProducto.color}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Aroma"
+              name="aroma"
+              value={nuevoProducto.aroma}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Cantidad"
+              name="cantidad"
+              type="number"
+              value={nuevoProducto.cantidad}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Peso Neto"
+              name="peso_neto"
+              value={nuevoProducto.peso_neto}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Código"
+              name="codigo"
+              type="number"
+              value={nuevoProducto.codigo}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Precio"
+              name="precio"
+              type="number"
+              value={nuevoProducto.precio}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal}>Cancelar</Button>
+          <Button variant="contained" onClick={handleSaveProducto}>
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={!!toastMsg}
+        autoHideDuration={3000}
+        onClose={() => setToastMsg('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setToastMsg('')} severity="success" sx={{ width: '100%' }}>
+          {toastMsg}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
