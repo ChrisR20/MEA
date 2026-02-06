@@ -1,0 +1,70 @@
+# ----------------------------
+# Python / Django
+# ----------------------------
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+env/
+venv/
+ENV/
+*.sqlite3
+*.db
+*.log
+*.pot
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+local_settings.py
+local.py
+db.sqlite3
+
+# Django migrations (opcional, si quieres versionarlas)
+# **/migrations/*.py
+# !**/migrations/__init__.py
+
+# ----------------------------
+# Environment / Secrets
+# ----------------------------
+.env
+.env.*
+.DS_Store
+
+# ----------------------------
+# Node / React / Vite
+# ----------------------------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+.pnp.*
+.vite/
+dist/
+build/
+
+# ----------------------------
+# Docker
+# ----------------------------
+docker-compose.override.yml
+**/Dockerfile*
+**/docker-compose.override.yml
+
+# ----------------------------
+# IDE / Editor
+# ----------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ----------------------------
+# System
+# ----------------------------
+*.swp
+*.bak
+*.tmp
+*.orig
+Thumbs.db
