@@ -300,6 +300,7 @@ function Productos() {
             <TableRow>
               {[
                 'Producto',
+                'Marca',
                 'Descripción',
                 'Color',
                 'Aroma',
@@ -327,6 +328,7 @@ function Productos() {
               productosFiltrados.map((p) => (
                 <TableRow key={p.id} hover>
                   <TableCell>{p.nombre_producto}</TableCell>
+                  <TableCell>{p.marca_nombre}</TableCell>
                   <TableCell>{p.desc}</TableCell>
                   <TableCell>{p.color || '-'}</TableCell>
                   <TableCell>{p.aroma || '-'}</TableCell>

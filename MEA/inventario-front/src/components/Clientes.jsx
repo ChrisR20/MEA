@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from 'react';
 
 import {
   Box,
@@ -9,10 +9,10 @@ import {
   TableRow,
   TableCell,
   TableBody,
-} from "@mui/material";
+} from '@mui/material';
 
-import { refreshAccessToken } from "./utils/auth"; // usa tu función actual
-import NavbarPrincipal from "./NavbarPrincipal";
+import { refreshAccessToken } from './utils/auth'; // usa tu función actual
+import NavbarPrincipal from './NavbarPrincipal';
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -21,18 +21,18 @@ export default function Clientes() {
     try {
       const token = await refreshAccessToken();
 
-      const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
+      const response = await fetch('http://127.0.0.1:8000/api/clientes/', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error("Error al obtener clientes");
+      if (!response.ok) throw new Error('Error al obtener clientes');
 
       const data = await response.json();
       setClientes(data);
     } catch (error) {
-      console.error("Error cargando clientes:", error);
+      console.error('Error cargando clientes:', error);
     }
   };
 
@@ -42,14 +42,11 @@ export default function Clientes() {
 
   return (
     <Box sx={{ p: 3 }}>
-    <Box sx={{ mb: 3 }}>
-      <NavbarPrincipal />
-    </Box>
-        
-      <Typography 
-        variant="h5"
-        align="center"
-        sx={{ mb: 2, fontWeight: "bold" }}>
+      <Box sx={{ mb: 3 }}>
+        <NavbarPrincipal />
+      </Box>
+
+      <Typography variant="h5" align="center" sx={{ mb: 2, fontWeight: 'bold' }}>
         Lista de Clientes
       </Typography>
 
@@ -57,8 +54,9 @@ export default function Clientes() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell><b>Nombre</b></TableCell>
-              <TableCell><b>Teléfono</b></TableCell>
+              <TableCell>
+                <b>Nombre</b>
+              </TableCell>
             </TableRow>
           </TableHead>
 
@@ -66,7 +64,6 @@ export default function Clientes() {
             {clientes.map((cliente) => (
               <TableRow key={cliente.id}>
                 <TableCell>{cliente.nombre}</TableCell>
-                <TableCell>{cliente.telefono}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.exceptions import ValidationError
+from django.db.models import Sum
 
 from apps.clientes.models import Cliente
 from apps.productos.models import Stock
@@ -12,7 +12,6 @@ class PedidoEstado(models.Model):
         return self.nombre
 
 
-# Pedido general (cliente, fecha, nota, si fue entregado, etc.)
 class Pedido(models.Model):
     TIPO_PAGO_CHOICES = [
         ('unico', 'Pago Único'),
@@ -20,66 +19,61 @@ class Pedido(models.Model):
     ]
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    pago = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    pago = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Usado SOLO para pago único"
+    )
     monto_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     nota = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True)
     entregado = models.BooleanField(default=False)
-    pagado = models.BooleanField(default=False)  # SOLO se modifica manualmente desde la API/UI
+    pagado = models.BooleanField(default=False)  # manual desde UI/API
     estado = models.ForeignKey(PedidoEstado, on_delete=models.PROTECT, default=1)
     tipo_pago = models.CharField(max_length=10, choices=TIPO_PAGO_CHOICES, default='unico')
 
+    # =========================
+    # CÁLCULOS
+    # =========================
+
     def actualizar_monto_total(self):
-        total = sum([pp.precio_total() for pp in self.productos.all()])
-        self.monto_total = total
-        # No modificamos 'pagado' automáticamente aquí
+        self.monto_total = sum(pp.precio_total() for pp in self.productos.all())
         self.save(update_fields=['monto_total'])
 
     @property
     def total_pagado_cuotas(self):
-        return sum(c.monto for c in self.cuotas.filter(pagado=True))
+        return (
+            self.cuotas
+            .filter(pagado=True)
+            .aggregate(total=Sum('monto'))['total'] or 0
+        )
 
-    def actualizar_pago_desde_cuotas(self):
+    @property
+    def pago_actual(self):
         """
-        Actualiza únicamente el campo 'pago' con la suma de cuotas pagadas.
-        NO modifica el flag 'pagado' — ese debe ser controlado manualmente.
+        Fuente ÚNICA de verdad para el frontend
         """
-        if self.tipo_pago == 'cuotas':
-            total_cuotas = self.total_pagado_cuotas
-            self.pago = total_cuotas
-            self.save(update_fields=['pago'])
-            # No cambiamos self.pagado aquí.
+        if self.tipo_pago == 'unico':
+            return self.pago
+        return self.total_pagado_cuotas
 
     @property
     def monto_pendiente(self):
-        pendiente = self.monto_total - self.pago
+        pendiente = self.monto_total - self.pago_actual
         return pendiente if pendiente > 0 else 0
 
-    def cantidad_producto(self, producto_id):
-        pedido_producto = self.productos.filter(producto_id=producto_id).first()
-        return pedido_producto.cantidad if pedido_producto else 0
-
     def actualizar_estado(self):
-        """
-        Actualiza el estado según los flags actuales pagado y entregado.
-        'estado_id' cambia solo si ambos flags indican 'completado'.
-        No modifica el flag 'pagado' ni otros campos.
-        """
         if self.pagado and self.entregado:
-            self.estado_id = 2  # estado "completado"
+            self.estado_id = 2
         else:
-            self.estado_id = 1  # estado "pendiente"
+            self.estado_id = 1
         self.save(update_fields=['estado_id'])
-
-    def save(self, *args, **kwargs):
-        # Guardado simple; lógica de negocio (pagado/entregado) debe venir desde la API/UI
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'Pedido {self.id} - {self.cliente}'
 
 
-# Relación de productos dentro de un pedido
 class PedidoProducto(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='productos')
     producto = models.ForeignKey(Stock, on_delete=models.CASCADE)
@@ -87,7 +81,6 @@ class PedidoProducto(models.Model):
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
 
     def save(self, *args, **kwargs):
-        # Solo asignar precio_unitario si es nuevo objeto (no tiene id todavía)
         if not self.pk:
             self.precio_unitario = self.producto.precio
         super().save(*args, **kwargs)
@@ -96,7 +89,7 @@ class PedidoProducto(models.Model):
         return self.precio_unitario * self.cantidad
 
     def __str__(self):
-        return f'{self.producto.nombre_producto} x{self.cantidad} - ${self.precio_total():.2f}'
+        return f'{self.producto.nombre_producto} x{self.cantidad}'
 
 
 class CuotaPago(models.Model):
@@ -109,24 +102,12 @@ class CuotaPago(models.Model):
         ordering = ['numero']
 
     def save(self, *args, **kwargs):
-        """
-        Guardamos la cuota y actualizamos el campo 'pago' del pedido (suma de cuotas pagadas).
-        NO modificamos el flag 'pagado' del pedido automáticamente.
-        """
         super().save(*args, **kwargs)
-        # Actualizar solo el campo pago del pedido (suma de cuotas pagadas)
-        try:
-            self.pedido.actualizar_pago_desde_cuotas()
-        except Exception:
-            # evitar que errores en actualización de pedido rompan la creación de la cuota
-            pass
+        # No tocar campos del pedido aquí
+        # El cálculo es dinámico vía properties
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        try:
-            self.pedido.actualizar_pago_desde_cuotas()
-        except Exception:
-            pass
 
     def __str__(self):
         estado = "Pagado" if self.pagado else "Pendiente"
