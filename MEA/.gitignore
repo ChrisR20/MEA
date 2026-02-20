@@ -20,6 +20,7 @@ dist/
 build/
 local_settings.py
 local.py
+production.py
 db.sqlite3
 
 # Django migrations (opcional, si quieres versionarlas)
