@@ -5,39 +5,92 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 
+
+# ======================================================
+# 🔐 Vista para obtener el token CSRF
+# ======================================================
+# Esta vista:
+# - Genera el token CSRF
+# - Lo devuelve en la respuesta JSON
+# - Además asegura que la cookie CSRF se envíe al navegador
+#
+# Se utiliza normalmente antes de hacer login desde el frontend
+# cuando se trabaja con autenticación basada en sesión.
 @ensure_csrf_cookie
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_csrf_token(request):
-    return JsonResponse({'csrfToken': get_token(request)})
+    return JsonResponse({
+        'csrfToken': get_token(request)
+    })
 
+
+# ======================================================
+# 🔐 Vista para login de usuario
+# ======================================================
+# Esta vista:
+# - Recibe username y password desde el frontend
+# - Autentica al usuario
+# - Si las credenciales son válidas, inicia sesión
+# - Devuelve información básica del usuario autenticado
+#
+# Usa autenticación basada en sesión (login de Django).
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def api_login(request):
-    try:
-        data = request.data
-        username = data.get('username')
-        password = data.get('password')
+    data = request.data
+    username = data.get('username')
+    password = data.get('password')
 
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return JsonResponse({'success': True, 'username': user.username})
-        else:
-            return JsonResponse({'success': False, 'error': 'Credenciales inválidas'}, status=401)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    user = authenticate(request, username=username, password=password)
 
+    if user is not None:
+        login(request, user)
+        return JsonResponse({
+            'success': True,
+            'username': user.username
+        })
+    
+    return JsonResponse({
+        'success': False,
+        'error': 'Credenciales inválidas'
+    }, status=401)
+
+
+# ======================================================
+# 🔐 Vista para cerrar sesión
+# ======================================================
+# Esta vista:
+# - Cierra la sesión del usuario autenticado
+# - Elimina la sesión activa
+# - Devuelve confirmación de logout
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def api_logout(request):
     logout(request)
-    return JsonResponse({'success': True})
+    return JsonResponse({
+        'success': True
+    })
 
+
+# ======================================================
+# 👤 Vista para verificar si el usuario está autenticado
+# ======================================================
+# Esta vista:
+# - Verifica si el usuario actual tiene sesión activa
+# - Devuelve si está autenticado
+# - Si lo está, retorna también el username
+#
+# Es útil para mantener el estado de sesión en el frontend.
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def usuario_logueado(request):
     if request.user.is_authenticated:
-        return JsonResponse({'authenticated': True, 'username': request.user.username})
-    else:
-        return JsonResponse({'authenticated': False}, status=401)
+        return JsonResponse({
+            'authenticated': True,
+            'username': request.user.username
+        })
+
+    return JsonResponse({
+        'authenticated': False
+    }, status=401)
