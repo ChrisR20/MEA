@@ -1,7 +1,6 @@
 // Productos.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import {
   AppBar,
   Toolbar,
@@ -33,6 +32,8 @@ import NavbarPrincipal from './NavbarPrincipal';
 import { refreshAccessToken } from './utils/auth';
 import { isSessionValid, clearSession } from '../utils/session';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function Productos() {
   const navigate = useNavigate();
 
@@ -62,34 +63,39 @@ function Productos() {
     navigate('/login', { replace: true });
   };
 
-  // --- Fetch Productos ---
-  const fetchProductos = async () => {
+  // --- Headers con token para todos los fetch ---
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('access_token');
+    return {
+      'Content-Type': 'application/json',
+      Authorization: token ? `Bearer ${token}` : '',
+    };
+  };
+
+  // --- Fetch Genérico con refresh de token ---
+  const fetchWithAuth = async (url, options = {}) => {
     if (!isSessionValid()) return handleLogout();
 
     const token = localStorage.getItem('access_token');
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    if (!token) return handleLogout();
 
-    if (!isAuth || !token) return handleLogout();
-
-    let res = await fetch('http://127.0.0.1:8000/api/productos/', {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    options.headers = { ...getAuthHeaders(), ...(options.headers || {}) };
+    let res = await fetch(url, options);
 
     if (res.status === 401) {
       const newToken = await refreshAccessToken();
       if (!newToken) return handleLogout();
 
-      res = await fetch('http://127.0.0.1:8000/api/productos/', {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${newToken}`,
-        },
-      });
+      options.headers.Authorization = `Bearer ${newToken}`;
+      res = await fetch(url, options);
     }
 
+    return res;
+  };
+
+  // --- Fetch Productos ---
+  const fetchProductos = async () => {
+    const res = await fetchWithAuth(`${API_URL}/api/productos/`);
     if (res.ok) {
       const data = await res.json();
       setProductos(Array.isArray(data) ? data : []);
@@ -100,14 +106,7 @@ function Productos() {
 
   // --- Fetch Marcas ---
   const fetchMarcas = async () => {
-    const token = localStorage.getItem('access_token');
-    const res = await fetch('http://127.0.0.1:8000/api/marcas/', {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
+    const res = await fetchWithAuth(`${API_URL}/api/marcas/`);
     if (res.ok) {
       setMarcas(await res.json());
     } else {
@@ -151,12 +150,7 @@ function Productos() {
 
   const handleChange = (e) => {
     let value = e.target.value;
-
-    // Si es marca, convertir a número
-    if (e.target.name === 'marca') {
-      value = parseInt(value, 10);
-    }
-
+    if (e.target.name === 'marca') value = parseInt(value, 10);
     setNuevoProducto({ ...nuevoProducto, [e.target.name]: value });
   };
 
@@ -164,7 +158,7 @@ function Productos() {
     setProductoEditar(p);
     setNuevoProducto({
       ...p,
-      marca: p.marca?.id || p.marca || '', // Asegura ID numérico
+      marca: p.marca?.id || p.marca || '',
     });
     handleOpenModal();
   };
@@ -173,11 +167,9 @@ function Productos() {
   // GUARDAR PRODUCTO
   // --------------------------
   const handleSaveProducto = async () => {
-    const token = localStorage.getItem('access_token');
-
     const body = {
       nombre_producto: nuevoProducto.nombre_producto || '',
-      marca: nuevoProducto.marca || null, // Ya es número
+      marca: nuevoProducto.marca || null,
       desc: nuevoProducto.desc || '',
       color: nuevoProducto.color || '',
       aroma: nuevoProducto.aroma || '',
@@ -187,24 +179,16 @@ function Productos() {
       precio: nuevoProducto.precio ? parseFloat(nuevoProducto.precio) : 0,
     };
 
-    let res;
     try {
+      let res;
       if (productoEditar) {
-        res = await fetch(`http://127.0.0.1:8000/api/productos/${productoEditar.id}/`, {
+        res = await fetchWithAuth(`${API_URL}/api/productos/${productoEditar.id}/`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(body),
         });
       } else {
-        res = await fetch('http://127.0.0.1:8000/api/productos/', {
+        res = await fetchWithAuth(`${API_URL}/api/productos/`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(body),
         });
       }
@@ -238,7 +222,7 @@ function Productos() {
     <Box
       sx={{
         width: '100%',
-        maxWidth: { xs: '95%', sm: '90%', md: 1200, lg: 1400, xl: 1600 },
+        maxWidth: 1400,
         minHeight: '100vh',
         backgroundColor: '#fff',
         p: 2,
@@ -247,11 +231,10 @@ function Productos() {
     >
       <NavbarPrincipal />
 
-      {/* APPBAR */}
       <AppBar
         position="static"
         elevation={0}
-        sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid #ddd', color: '#333' }}
+        sx={{ backgroundColor: '#fff', borderBottom: '1px solid #ddd', color: '#333' }}
       >
         <Toolbar>
           <Stack
@@ -264,17 +247,10 @@ function Productos() {
             <Button
               variant="contained"
               onClick={handleOpenModal}
-              sx={{
-                bgcolor: '#a8d5ba',
-                color: '#2f4f4f',
-                '&:hover': { bgcolor: '#8bc39f' },
-                width: 150,
-                paddingY: 0.6,
-              }}
+              sx={{ bgcolor: '#a8d5ba', color: '#2f4f4f', '&:hover': { bgcolor: '#8bc39f' } }}
             >
               Agregar Producto
             </Button>
-
             <TextField
               variant="outlined"
               placeholder="Buscar producto..."
@@ -308,7 +284,6 @@ function Productos() {
                 'Peso Neto',
                 'Código',
                 'Precio',
-                'Marca',
                 'Acciones',
               ].map((h) => (
                 <TableCell key={h} sx={{ fontWeight: 'bold' }}>
@@ -320,7 +295,7 @@ function Productos() {
           <TableBody>
             {productosFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center">
+                <TableCell colSpan={11} align="center">
                   No se encontraron productos
                 </TableCell>
               </TableRow>
@@ -336,7 +311,6 @@ function Productos() {
                   <TableCell>{p.peso_neto || '-'}</TableCell>
                   <TableCell>{p.codigo || '-'}</TableCell>
                   <TableCell>${p.precio}</TableCell>
-                  <TableCell>{p.marca_nombre || '-'}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
                       <Button variant="outlined" size="small" onClick={() => handleEditProducto(p)}>

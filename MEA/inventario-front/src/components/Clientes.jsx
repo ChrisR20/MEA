@@ -14,6 +14,8 @@ import {
 import { refreshAccessToken } from './utils/auth'; // usa tu función actual
 import NavbarPrincipal from './NavbarPrincipal';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
 
@@ -21,7 +23,7 @@ export default function Clientes() {
     try {
       const token = await refreshAccessToken();
 
-      const response = await fetch('http://127.0.0.1:8000/api/clientes/', {
+      const response = await fetch(`${API_URL}/api/clientes/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

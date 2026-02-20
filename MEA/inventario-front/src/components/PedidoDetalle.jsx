@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react"; 
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -13,14 +13,16 @@ import {
   Button,
   Divider,
   Grid,
-} from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import NavbarPrincipal from "./NavbarPrincipal";
-import { refreshAccessToken } from "./utils/auth";
-import { isSessionValid, clearSession } from "../utils/session";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+} from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import NavbarPrincipal from './NavbarPrincipal';
+import { refreshAccessToken } from './utils/auth';
+import { isSessionValid, clearSession } from '../utils/session';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function PedidoDetalle() {
   const { id } = useParams();
@@ -30,41 +32,56 @@ export default function PedidoDetalle() {
   const [error, setError] = useState(null);
 
   const formatoARS = (valor) =>
-    parseFloat(valor).toLocaleString("es-AR", { minimumFractionDigits: 2 });
+    parseFloat(valor).toLocaleString('es-AR', { minimumFractionDigits: 2 });
 
-  const fetchPedido = async () => {
+  // === Helper fetch con refresh token ===
+  const fetchConRefresh = async (url, options = {}) => {
     try {
       if (!isSessionValid()) {
         clearSession();
-        navigate("/login", { replace: true });
-        return;
+        navigate('/login', { replace: true });
+        return null;
       }
 
-      let token = localStorage.getItem("access_token");
-      let res = await fetch(`http://127.0.0.1:8000/api/pedidodetalle/${id}/`, {
-        headers: { Authorization: `Bearer ${token}` },
+      let token = localStorage.getItem('access_token');
+      let res = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (res.status === 401) {
         token = await refreshAccessToken();
         if (!token) {
           clearSession();
-          navigate("/login", { replace: true });
-          return;
+          navigate('/login', { replace: true });
+          return null;
         }
-        res = await fetch(`http://127.0.0.1:8000/api/pedidodetalle/${id}/`, {
-          headers: { Authorization: `Bearer ${token}` },
+
+        res = await fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            Authorization: `Bearer ${token}`,
+          },
         });
       }
 
-      if (!res.ok) throw new Error("Error al cargar el detalle del pedido");
-      const data = await res.json();
-      setPedido(data);
+      if (!res.ok) throw new Error('Error al cargar los datos');
+      return await res.json();
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
+      return null;
     }
+  };
+
+  const fetchPedido = async () => {
+    setLoading(true);
+    const data = await fetchConRefresh(`${API_URL}/api/pedidodetalle/${id}/`);
+    if (data) setPedido(data);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -74,11 +91,11 @@ export default function PedidoDetalle() {
   const handlePrint = () => {
     if (!pedido) return;
 
-    const facturaHTML = document.getElementById("factura").outerHTML;
-    const printWindow = window.open("", "_blank");
+    const facturaHTML = document.getElementById('factura')?.outerHTML;
+    const printWindow = window.open('', '_blank');
 
     if (!printWindow) {
-      alert("Por favor permita ventanas emergentes para imprimir la factura.");
+      alert('Por favor permita ventanas emergentes para imprimir la factura.');
       return;
     }
 
@@ -121,22 +138,22 @@ export default function PedidoDetalle() {
 
   const handleDownloadPDF = async () => {
     if (!pedido) return;
-    const factura = document.getElementById("factura");
+    const factura = document.getElementById('factura');
     if (!factura) return;
 
     try {
       const canvas = await html2canvas(factura, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL('image/png');
 
-      const pdf = new jsPDF("p", "mm", "a4");
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Factura_Pedido_${pedido.id}.pdf`);
     } catch (err) {
-      console.error("Error generando PDF:", err);
-      alert("Ocurrió un error al generar el PDF");
+      console.error('Error generando PDF:', err);
+      alert('Ocurrió un error al generar el PDF');
     }
   };
 
@@ -162,7 +179,7 @@ export default function PedidoDetalle() {
   );
 
   return (
-    <Box sx={{ p: 3, maxWidth: 900, mx: "auto" }}>
+    <Box sx={{ p: 3, maxWidth: 900, mx: 'auto' }}>
       <Box sx={{ mb: 3 }}>
         <NavbarPrincipal />
       </Box>
@@ -174,40 +191,62 @@ export default function PedidoDetalle() {
       <Box
         sx={{
           p: 3,
-          border: "1px solid #ccc",
+          border: '1px solid #ccc',
           borderRadius: 2,
           boxShadow: 2,
-          bgcolor: "#fff",
+          bgcolor: '#fff',
         }}
         id="factura"
       >
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={6}>
-            <Typography><strong>Cliente:</strong> {pedido.cliente_nombre || "-"}</Typography>
-            <Typography><strong>Nota:</strong> {pedido.nota || "-"}</Typography>
-            <Typography><strong>Fecha:</strong> {new Date(pedido.fecha).toLocaleDateString()}</Typography>
             <Typography>
-              <strong>Entregado:</strong>{" "}
-              {pedido.entregado ? <CheckCircleOutlineIcon color="success" /> : <CancelOutlinedIcon color="error" />}
+              <strong>Cliente:</strong> {pedido.cliente_nombre || '-'}
             </Typography>
             <Typography>
-              <strong>Pagado:</strong>{" "}
-              {pedido.pagado ? <CheckCircleOutlineIcon color="success" /> : <CancelOutlinedIcon color="error" />}
+              <strong>Nota:</strong> {pedido.nota || '-'}
+            </Typography>
+            <Typography>
+              <strong>Fecha:</strong> {new Date(pedido.fecha).toLocaleDateString()}
+            </Typography>
+            <Typography>
+              <strong>Entregado:</strong>{' '}
+              {pedido.entregado ? (
+                <CheckCircleOutlineIcon color="success" />
+              ) : (
+                <CancelOutlinedIcon color="error" />
+              )}
+            </Typography>
+            <Typography>
+              <strong>Pagado:</strong>{' '}
+              {pedido.pagado ? (
+                <CheckCircleOutlineIcon color="success" />
+              ) : (
+                <CancelOutlinedIcon color="error" />
+              )}
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography><strong>Pago Actual:</strong> ${formatoARS(pedido.pago_actual)}</Typography>
-            <Typography><strong>Monto Total:</strong> ${formatoARS(pedido.monto_total)}</Typography>
-            <Typography><strong>Monto Pendiente:</strong> ${formatoARS(pedido.monto_pendiente)}</Typography>
+            <Typography>
+              <strong>Pago Actual:</strong> ${formatoARS(pedido.pago_actual)}
+            </Typography>
+            <Typography>
+              <strong>Monto Total:</strong> ${formatoARS(pedido.monto_total)}
+            </Typography>
+            <Typography>
+              <strong>Monto Pendiente:</strong> ${formatoARS(pedido.monto_pendiente)}
+            </Typography>
           </Grid>
         </Grid>
 
         <Divider sx={{ mb: 3 }} />
 
-        <Typography variant="h6" sx={{ mb: 2 }}>Productos</Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Productos
+        </Typography>
         <TableContainer component={Paper} sx={{ mb: 3 }}>
           <Table>
-            <TableHead sx={{ bgcolor: "#f4ce75" }}>
+            <TableHead sx={{ bgcolor: '#f4ce75' }}>
               <TableRow>
                 <TableCell>Producto</TableCell>
                 <TableCell>Descripción</TableCell>
@@ -225,17 +264,23 @@ export default function PedidoDetalle() {
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={3} align="right"><strong>Total</strong></TableCell>
-                <TableCell><strong>${formatoARS(totalProductos)}</strong></TableCell>
+                <TableCell colSpan={3} align="right">
+                  <strong>Total</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>${formatoARS(totalProductos)}</strong>
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </TableContainer>
 
-        <Typography variant="h6" sx={{ mb: 2 }}>Cuotas</Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Cuotas
+        </Typography>
         <TableContainer component={Paper}>
           <Table>
-            <TableHead sx={{ bgcolor: "#f4ce75" }}>
+            <TableHead sx={{ bgcolor: '#f4ce75' }}>
               <TableRow>
                 <TableCell>Número</TableCell>
                 <TableCell>Monto</TableCell>
@@ -248,12 +293,14 @@ export default function PedidoDetalle() {
                   <TableRow key={c.id}>
                     <TableCell>Cuota {c.numero}</TableCell>
                     <TableCell>${formatoARS(c.monto)}</TableCell>
-                    <TableCell>{c.pagado ? "Sí" : "No"}</TableCell>
+                    <TableCell>{c.pagado ? 'Sí' : 'No'}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">Pago único</TableCell>
+                  <TableCell colSpan={3} align="center">
+                    Pago único
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -265,10 +312,16 @@ export default function PedidoDetalle() {
         </Typography>
       </Box>
 
-      <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
-        <Button variant="contained" onClick={() => navigate(-1)}>Volver</Button>
-        <Button variant="outlined" onClick={handlePrint}>Imprimir Factura</Button>
-        <Button variant="outlined" onClick={handleDownloadPDF}>Descargar PDF</Button>
+      <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+        <Button variant="contained" onClick={() => navigate(-1)}>
+          Volver
+        </Button>
+        <Button variant="outlined" onClick={handlePrint}>
+          Imprimir Factura
+        </Button>
+        <Button variant="outlined" onClick={handleDownloadPDF}>
+          Descargar PDF
+        </Button>
       </Box>
     </Box>
   );

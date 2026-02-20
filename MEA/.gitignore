@@ -46,13 +46,6 @@ dist/
 build/
 
 # ----------------------------
-# Docker
-# ----------------------------
-docker-compose.override.yml
-**/Dockerfile*
-**/docker-compose.override.yml
-
-# ----------------------------
 # IDE / Editor
 # ----------------------------
 .vscode/

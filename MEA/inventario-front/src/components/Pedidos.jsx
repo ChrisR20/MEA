@@ -23,6 +23,8 @@ import NavbarPrincipal from './NavbarPrincipal';
 import { refreshAccessToken } from './utils/auth';
 import { isSessionValid, clearSession } from '../utils/session';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function Pedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -95,7 +97,7 @@ function Pedidos() {
     try {
       setLoading(true);
 
-      const res = await fetchConRefresh('http://127.0.0.1:8000/api/pedidos/');
+      const res = await fetchConRefresh(`${API_URL}/api/pedidos/`);
       if (!res) return;
 
       if (!res.ok) throw new Error('Error al cargar pedidos pendientes');
@@ -115,7 +117,7 @@ function Pedidos() {
     try {
       setLoading(true);
 
-      const res = await fetchConRefresh('http://127.0.0.1:8000/api/pedidos-entregados-pagados/');
+      const res = await fetchConRefresh(`${API_URL}/api/pedidos-entregados-pagados/`);
       if (!res) return;
 
       if (!res.ok) throw new Error('Error al cargar pedidos entregados y pagados');
