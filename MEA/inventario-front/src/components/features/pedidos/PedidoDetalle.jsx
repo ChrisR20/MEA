@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import NavbarPrincipal from '../../NavbarPrincipal';
 import { refreshAccessToken } from '../../utils/auth';
 import { isSessionValid, clearSession } from '../../../utils/session';
@@ -157,6 +158,59 @@ export default function PedidoDetalle() {
     }
   };
 
+  // ================================
+  // 🟢 COMPARTIR POR WHATSAPP
+  // ================================
+  const handleShareWhatsApp = () => {
+    if (!pedido) return;
+
+    const totalProductos = pedido.productos.reduce(
+      (sum, p) => sum + p.precio_unitario * p.cantidad,
+      0
+    );
+
+    const productosTexto = pedido.productos
+      .map(
+        (p) =>
+          `• ${p.producto_nombre} x${p.cantidad} - $${formatoARS(p.precio_unitario * p.cantidad)}`
+      )
+      .join('\n');
+
+    // === Cuotas ===
+    const cuotasTexto =
+      pedido.cuotas.length > 0
+        ? pedido.cuotas
+            .map(
+              (c) =>
+                `• Cuota ${c.numero}: $${formatoARS(c.monto)} - ${
+                  c.pagado ? '✅ Pagada' : '❌ Pendiente'
+                }`
+            )
+            .join('\n')
+        : 'Pago único';
+
+    const mensaje = `
+    📦 *Detalle de tu pedido*
+    👤 Cliente: ${pedido.cliente_nombre}
+    📅 Fecha del pedido: ${new Date(pedido.fecha).toLocaleDateString()}
+
+    🛒 *Productos:*
+    ${productosTexto}
+
+    💰 Total: $${formatoARS(totalProductos)}
+    💵 Pago Actual: $${formatoARS(pedido.pago_actual)}
+    🧾 Monto pendiente: $${formatoARS(pedido.monto_pendiente)}
+
+    💳 *Cuotas:*
+    ${cuotasTexto}
+
+    Gracias por tu compra 🙌
+    `;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+  };
+
   if (loading)
     return (
       <Typography align="center" sx={{ mt: 4, fontWeight: 600 }}>
@@ -185,7 +239,7 @@ export default function PedidoDetalle() {
       </Box>
 
       <Typography variant="h4" sx={{ mb: 3 }} align="center">
-        Pedido #{pedido.id} - {pedido.cliente_nombre}
+        Detalle de tu pedido {pedido.cliente_nombre}
       </Typography>
 
       <Box
@@ -244,6 +298,7 @@ export default function PedidoDetalle() {
         <Typography variant="h6" sx={{ mb: 2 }}>
           Productos
         </Typography>
+
         <TableContainer component={Paper} sx={{ mb: 3 }}>
           <Table>
             <TableHead sx={{ bgcolor: '#f4ce75' }}>
@@ -312,15 +367,26 @@ export default function PedidoDetalle() {
         </Typography>
       </Box>
 
-      <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+      <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <Button variant="contained" onClick={() => navigate(-1)}>
           Volver
         </Button>
+
         <Button variant="outlined" onClick={handlePrint}>
-          Imprimir Factura
+          Imprimir
         </Button>
+
         <Button variant="outlined" onClick={handleDownloadPDF}>
           Descargar PDF
+        </Button>
+
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<WhatsAppIcon />}
+          onClick={handleShareWhatsApp}
+        >
+          Compartir
         </Button>
       </Box>
     </Box>
