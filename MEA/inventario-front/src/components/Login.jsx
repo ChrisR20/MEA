@@ -91,7 +91,7 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
           {/* Agregar el logo aquí */}
           <Avatar
             alt="Logo"
-            src={`${API_URL}/static/img/logo.jpeg`}
+            src="/logo.jpeg" // ✅ servido por React directamente
             sx={{ width: 150, height: 150, mb: 2 }}
           />
           <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
