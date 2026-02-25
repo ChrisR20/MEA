@@ -11,8 +11,8 @@ import {
   TableBody,
 } from '@mui/material';
 
-import { refreshAccessToken } from './utils/auth'; // usa tu función actual
-import NavbarPrincipal from './NavbarPrincipal';
+import { refreshAccessToken } from '../../utils/auth';
+import NavbarPrincipal from '../../NavbarPrincipal';
 
 const API_URL = import.meta.env.VITE_API_URL;
 

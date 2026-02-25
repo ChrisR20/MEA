@@ -33,7 +33,7 @@ import Productos from './components/Productos';
 import Pedidos from './components/features/pedidos/Pedidos';
 import CrearPedido from './components/CrearPedidos';
 import PedidoDetalle from './components/PedidoDetalle';
-import Clientes from './components/Clientes';
+import Clientes from './components/features/clientes/Clientes';
 
 import { isSessionValid, clearSession } from './utils/session';
 
