@@ -16,9 +16,9 @@ import {
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
-import NavbarPrincipal from './NavbarPrincipal';
-import { refreshAccessToken } from './utils/auth';
-import { isSessionValid, clearSession } from '../utils/session';
+import NavbarPrincipal from '../../NavbarPrincipal';
+import { refreshAccessToken } from '../../utils/auth';
+import { isSessionValid, clearSession } from '../../../utils/session';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
