@@ -29,7 +29,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
 
 import Login from './components/Login';
-import Productos from './components/Productos';
+import Productos from './components/features/productos/Productos';
 import Pedidos from './components/features/pedidos/Pedidos';
 import CrearPedido from './components/CrearPedidos';
 import PedidoDetalle from './components/features/pedidos/PedidoDetalle';

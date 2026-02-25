@@ -28,9 +28,9 @@ import {
   Stack,
 } from '@mui/material';
 
-import NavbarPrincipal from './NavbarPrincipal';
-import { refreshAccessToken } from './utils/auth';
-import { isSessionValid, clearSession } from '../utils/session';
+import NavbarPrincipal from '../../NavbarPrincipal';
+import { refreshAccessToken } from '../../utils/auth';
+import { isSessionValid, clearSession } from '../../../utils/session';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
