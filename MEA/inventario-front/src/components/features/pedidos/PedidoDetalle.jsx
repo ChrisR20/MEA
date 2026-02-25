@@ -176,35 +176,37 @@ export default function PedidoDetalle() {
       )
       .join('\n');
 
-    // === Cuotas ===
     const cuotasTexto =
       pedido.cuotas.length > 0
         ? pedido.cuotas
             .map(
               (c) =>
-                `• Cuota ${c.numero}: $${formatoARS(c.monto)} - ${
-                  c.pagado ? '✅ Pagada' : '❌ Pendiente'
+                `• *Cuota* ${c.numero}: $${formatoARS(c.monto)} - ${
+                  c.pagado ? ' *Pagada*' : ' *Pendiente*'
                 }`
             )
             .join('\n')
-        : 'Pago único';
+        : '*Pago único*';
+
+    // === Solo mostrar "Entregado" si es verdadero ===
+    const estadoEntregadoTexto = pedido.entregado ? '*Estado:* Entregado' : '*Estado:* Pendiente';
 
     const mensaje = `
-    📦 *Detalle de tu pedido*
-    👤 Cliente: ${pedido.cliente_nombre}
-    📅 Fecha del pedido: ${new Date(pedido.fecha).toLocaleDateString()}
-
-    🛒 *Productos:*
+    *Detalle de tu pedido*
+    *Cliente*: ${pedido.cliente_nombre}
+    *Fecha del pedido*: ${new Date(pedido.fecha).toLocaleDateString()}
+    ${estadoEntregadoTexto}
+    *Productos:*
     ${productosTexto}
 
-    💰 Total: $${formatoARS(totalProductos)}
-    💵 Pago Actual: $${formatoARS(pedido.pago_actual)}
-    🧾 Monto pendiente: $${formatoARS(pedido.monto_pendiente)}
+    *Total*: $${formatoARS(totalProductos)}
+    *Pago Actual*: $${formatoARS(pedido.pago_actual)}
+    *Monto pendiente*: $${formatoARS(pedido.monto_pendiente)}
 
-    💳 *Cuotas:*
+    *Cuotas:*
     ${cuotasTexto}
 
-    Gracias por tu compra 🙌
+    *Gracias por tu compra*
     `;
 
     const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
@@ -372,14 +374,6 @@ export default function PedidoDetalle() {
           Volver
         </Button>
 
-        <Button variant="outlined" onClick={handlePrint}>
-          Imprimir
-        </Button>
-
-        <Button variant="outlined" onClick={handleDownloadPDF}>
-          Descargar PDF
-        </Button>
-
         <Button
           variant="contained"
           color="success"
@@ -387,6 +381,14 @@ export default function PedidoDetalle() {
           onClick={handleShareWhatsApp}
         >
           Compartir
+        </Button>
+
+        <Button variant="outlined" onClick={handleDownloadPDF}>
+          Descargar PDF
+        </Button>
+
+        <Button variant="outlined" onClick={handlePrint}>
+          Imprimir
         </Button>
       </Box>
     </Box>
