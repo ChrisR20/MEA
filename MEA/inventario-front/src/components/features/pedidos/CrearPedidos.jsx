@@ -20,8 +20,8 @@ import {
   Snackbar,
 } from '@mui/material';
 import { Delete } from '@mui/icons-material';
-import NavbarPrincipal from './NavbarPrincipal';
-import { refreshAccessToken } from './utils/auth';
+import NavbarPrincipal from '../../NavbarPrincipal';
+import { refreshAccessToken } from '../../utils/auth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
