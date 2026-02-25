@@ -114,7 +114,7 @@ const Layout = ({ onLogout, username }) => {
                     color: 'white',
                     '&:hover': { bgcolor: hoverColor },
                   }}
-                  onClick={() => window.open('http://localhost:8000/', '_blank')}
+                  onClick={() => window.open(`${API_URL}`, '_blank')}
                 >
                   Admin
                 </Button>
