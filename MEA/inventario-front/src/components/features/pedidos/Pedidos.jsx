@@ -19,9 +19,9 @@ import {
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 
-import NavbarPrincipal from './NavbarPrincipal';
-import { refreshAccessToken } from './utils/auth';
-import { isSessionValid, clearSession } from '../utils/session';
+import NavbarPrincipal from '../../NavbarPrincipal';
+import { refreshAccessToken } from '../../utils/auth';
+import { isSessionValid, clearSession } from '../../../utils/session';
 
 const API_URL = import.meta.env.VITE_API_URL;
 

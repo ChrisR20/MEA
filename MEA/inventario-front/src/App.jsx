@@ -30,9 +30,9 @@ import PeopleIcon from '@mui/icons-material/People';
 
 import Login from './components/Login';
 import Productos from './components/Productos';
-import Pedidos from './components/Pedidos';
+import Pedidos from './components/features/pedidos/Pedidos';
 import CrearPedido from './components/CrearPedidos';
-import PedidoDetalle from './components/PedidoDetalle'; // 🔥 IMPORTANTE
+import PedidoDetalle from './components/PedidoDetalle';
 import Clientes from './components/Clientes';
 
 import { isSessionValid, clearSession } from './utils/session';
