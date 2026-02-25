@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
 # ======================================================
@@ -74,23 +74,13 @@ def api_logout(request):
 
 
 # ======================================================
-# 👤 Vista para verificar si el usuario está autenticado
+# 🔑 Verificar permisos de usuario
 # ======================================================
-# Esta vista:
-# - Verifica si el usuario actual tiene sesión activa
-# - Devuelve si está autenticado
-# - Si lo está, retorna también el username
-#
-# Es útil para mantener el estado de sesión en el frontend.
+# Devuelve true si el usuario es admin, staff o superuser
 @api_view(['GET'])
-@permission_classes([AllowAny])
-def usuario_logueado(request):
-    if request.user.is_authenticated:
-        return JsonResponse({
-            'authenticated': True,
-            'username': request.user.username
-        })
-
-    return JsonResponse({
-        'authenticated': False
-    }, status=401)
+@permission_classes([IsAuthenticated])
+def is_permission(request):
+    user = request.user
+    has_permission = user.is_staff or user.is_superuser or user.is_superuser
+    print("tiene permiso",has_permission)
+    return JsonResponse({'hasPermission': has_permission})

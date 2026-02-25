@@ -34,8 +34,11 @@ import Pedidos from './components/features/pedidos/Pedidos';
 import CrearPedido from './components/features/pedidos/CrearPedidos';
 import PedidoDetalle from './components/features/pedidos/PedidoDetalle';
 import Clientes from './components/features/clientes/Clientes';
+import { refreshAccessToken } from './components/utils/auth';
 
 import { isSessionValid, clearSession } from './utils/session';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 // 🎨 Paleta de colores
 const primaryColor = '#d4af37'; // dorado
@@ -49,6 +52,48 @@ const cardBg = '#ffffff';
 const Layout = ({ onLogout, username }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [canAccessAdmin, setCanAccessAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkPermission = async () => {
+      try {
+        // Traemos el token de localStorage
+        let token = localStorage.getItem('accessToken');
+
+        // Si tienes refresh token, lo renovamos si es necesario
+        if (!token) {
+          token = await refreshAccessToken();
+        }
+
+        if (!token) {
+          setCanAccessAdmin(false);
+          return;
+        }
+
+        const res = await fetch(`${API_URL}/accounts/api/is-permission/`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!res.ok) {
+          console.error('Error verificando permisos:', res.status, res.statusText);
+          setCanAccessAdmin(false);
+          return;
+        }
+
+        const data = await res.json();
+        setCanAccessAdmin(data.hasPermission);
+      } catch (err) {
+        console.error('Error verificando permisos:', err);
+        setCanAccessAdmin(false);
+      }
+    };
+
+    checkPermission();
+  }, []);
 
   const hideNavbarRoutes = ['/login'];
   const hideNavbar = hideNavbarRoutes.some((path) => location.pathname.startsWith(path));
@@ -61,17 +106,19 @@ const Layout = ({ onLogout, username }) => {
           <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
             {/* IZQUIERDA: Admin */}
             <Box sx={{ flex: 1 }}>
-              <Button
-                variant="contained"
-                sx={{
-                  bgcolor: hoverColor,
-                  color: 'white',
-                  '&:hover': { bgcolor: hoverColor },
-                }}
-                onClick={() => window.open('http://localhost:8000/', '_blank')}
-              >
-                Admin
-              </Button>
+              {canAccessAdmin && (
+                <Button
+                  variant="contained"
+                  sx={{
+                    bgcolor: hoverColor,
+                    color: 'white',
+                    '&:hover': { bgcolor: hoverColor },
+                  }}
+                  onClick={() => window.open('http://localhost:8000/', '_blank')}
+                >
+                  Admin
+                </Button>
+              )}
             </Box>
 
             {/* CENTRO: Hola usuario */}
