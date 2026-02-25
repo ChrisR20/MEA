@@ -119,8 +119,16 @@ USE_TZ = True
 # STATIC
 # ========================
 
+import os
+from pathlib import Path
+
+# BASE_DIR sigue igual
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Ruta absoluta que siempre existe dentro del contenedor
+STATICFILES_DIRS = ["/app/MEA/static"]  # Fijo, no relativo
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

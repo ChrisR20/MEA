@@ -82,5 +82,4 @@ def api_logout(request):
 def is_permission(request):
     user = request.user
     has_permission = user.is_staff or user.is_superuser or user.is_superuser
-    print("tiene permiso",has_permission)
     return JsonResponse({'hasPermission': has_permission})

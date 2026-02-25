@@ -91,7 +91,7 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
           {/* Agregar el logo aquí */}
           <Avatar
             alt="Logo"
-            src="/logo.jpeg" // ✅ servido por React directamente
+            src={`${import.meta.env.VITE_API_URL}/static/logo.jpeg`}
             sx={{ width: 150, height: 150, mb: 2 }}
           />
           <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
