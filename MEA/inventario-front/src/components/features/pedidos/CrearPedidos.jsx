@@ -600,24 +600,73 @@ function CrearPedido() {
         <Box mt={3} display="flex" justifyContent="space-between">
           <FormControlLabel
             control={
-              <Checkbox checked={entregado} onChange={(e) => setEntregado(e.target.checked)} />
+              <Checkbox
+                checked={entregado}
+                onChange={(e) => setEntregado(e.target.checked)}
+                sx={{
+                  color: colorPrimary, // color del borde
+                  '&.Mui-checked': {
+                    color: colorPrimary, // color cuando está checked
+                  },
+                }}
+              />
             }
             label="Entregado"
           />
+
           <FormControlLabel
-            control={<Checkbox checked={pagado} onChange={(e) => setPagado(e.target.checked)} />}
+            control={
+              <Checkbox
+                checked={pagado}
+                onChange={(e) => setPagado(e.target.checked)}
+                sx={{
+                  color: colorPrimary,
+                  '&.Mui-checked': {
+                    color: colorPrimary,
+                  },
+                }}
+              />
+            }
             label="Pagado"
           />
         </Box>
 
-        <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          sx={{ mt: 3, backgroundColor: colorPrimary }}
-        >
-          {pedidoId ? 'Actualizar Pedido' : 'Crear Pedido'}
-        </Button>
+        {/* BOTONES ACCIÓN */}
+        <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
+          <Button
+            variant="outlined"
+            size="medium"
+            onClick={() => navigate('/pedidos')}
+            sx={{
+              borderColor: '#999',
+              color: '#555',
+              fontWeight: 600,
+              minWidth: 120,
+              '&:hover': {
+                backgroundColor: '#f5f5f5',
+                borderColor: '#777',
+              },
+            }}
+          >
+            Volver
+          </Button>
+
+          <Button
+            type="submit"
+            variant="contained"
+            size="medium"
+            sx={{
+              backgroundColor: colorPrimary,
+              fontWeight: 600,
+              minWidth: 160,
+              '&:hover': {
+                backgroundColor: '#a87422',
+              },
+            }}
+          >
+            {pedidoId ? 'Actualizar' : 'Crear'}
+          </Button>
+        </Box>
       </Box>
 
       <Snackbar
