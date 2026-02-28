@@ -163,6 +163,16 @@ function Productos() {
     handleOpenModal();
   };
 
+  const formatPrecio = (valor) => {
+      if (valor === null || valor === undefined) return '$ 0';
+
+      return new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        minimumFractionDigits: 2,
+      }).format(valor);
+    };
+    
   // --------------------------
   // GUARDAR PRODUCTO
   // --------------------------
@@ -310,7 +320,7 @@ function Productos() {
                   <TableCell>{p.cantidad || '-'}</TableCell>
                   <TableCell>{p.peso_neto || '-'}</TableCell>
                   <TableCell>{p.codigo || '-'}</TableCell>
-                  <TableCell>${p.precio}</TableCell>
+                  <TableCell>{formatPrecio(p.precio)}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
                       <Button variant="outlined" size="small" onClick={() => handleEditProducto(p)}>
