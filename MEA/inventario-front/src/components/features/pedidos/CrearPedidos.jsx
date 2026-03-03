@@ -632,16 +632,23 @@ function CrearPedido() {
         </Box>
 
         {/* BOTONES ACCIÓN */}
-        <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
+        <Box
+          mt={4}
+          display="flex"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
+          gap={2}
+        >
           <Button
             variant="outlined"
             size="medium"
+            fullWidth={{ xs: true, sm: false }}
             onClick={() => navigate('/pedidos')}
             sx={{
               borderColor: '#999',
               color: '#555',
               fontWeight: 600,
-              minWidth: 120,
+              minWidth: { sm: 120 },
               '&:hover': {
                 backgroundColor: '#f5f5f5',
                 borderColor: '#777',
@@ -655,10 +662,11 @@ function CrearPedido() {
             type="submit"
             variant="contained"
             size="medium"
+            fullWidth={{ xs: true, sm: false }}
             sx={{
               backgroundColor: colorPrimary,
               fontWeight: 600,
-              minWidth: 160,
+              minWidth: { sm: 160 },
               '&:hover': {
                 backgroundColor: '#a87422',
               },
