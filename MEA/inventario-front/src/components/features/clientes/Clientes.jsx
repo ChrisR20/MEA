@@ -9,6 +9,8 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TextField,
+  Toolbar,
 } from '@mui/material';
 
 import { refreshAccessToken } from '../../utils/auth';
@@ -18,6 +20,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
+  const [busqueda, setBusqueda] = useState('');
 
   const fetchClientes = async () => {
     try {
@@ -42,15 +45,35 @@ export default function Clientes() {
     fetchClientes();
   }, []);
 
+  // 🔎 Filtrado en frontend
+  const clientesFiltrados = clientes.filter((cliente) =>
+    cliente.nombre?.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
         <NavbarPrincipal />
       </Box>
 
-      <Typography variant="h5" align="center" sx={{ mb: 2, fontWeight: 'bold' }}>
+      <Typography
+        variant="h5"
+        align="center"
+        sx={{ mb: 2, fontWeight: 'bold' }}
+      >
         Lista de Clientes
       </Typography>
+
+      <Toolbar sx={{ mb: 2 }}>
+        <TextField
+          variant="outlined"
+          placeholder="Buscar Cliente..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          size="small"
+          sx={{ maxWidth: 300, width: '100%' }}
+        />
+      </Toolbar>
 
       <Paper sx={{ p: 2 }}>
         <Table>
@@ -63,11 +86,19 @@ export default function Clientes() {
           </TableHead>
 
           <TableBody>
-            {clientes.map((cliente) => (
-              <TableRow key={cliente.id}>
-                <TableCell>{cliente.nombre}</TableCell>
+            {clientesFiltrados.length > 0 ? (
+              clientesFiltrados.map((cliente) => (
+                <TableRow key={cliente.id}>
+                  <TableCell>{cliente.nombre}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell align="center">
+                  No se encontraron clientes
+                </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </Paper>
