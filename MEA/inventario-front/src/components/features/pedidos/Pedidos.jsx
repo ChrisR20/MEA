@@ -159,7 +159,7 @@ function Pedidos() {
     <Box
       sx={{
         width: '100%',
-        maxWidth: { xs: '95%', sm: '90%', md: 1200, lg: 1400, xl: 1600 },
+        maxWidth: { xs: '100%', sm: '100%', md: 1200, lg: 1400, xl: 1600 },
         minHeight: '100vh',
         color: '#333',
         backgroundColor: '#fff',

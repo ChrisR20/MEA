@@ -335,9 +335,8 @@ function CrearPedido() {
         onSubmit={handleSubmit}
         sx={{
           width: '100%',
-          maxWidth: 600,
           backgroundColor: '#fff',
-          p: 4,
+          p: 1,
           boxShadow: '0 0 10px rgba(0,0,0,0.1)',
           boxSizing: 'border-box',
         }}

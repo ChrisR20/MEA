@@ -51,20 +51,16 @@ export default function Clientes() {
   );
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 2 }}>
       <Box sx={{ mb: 3 }}>
         <NavbarPrincipal />
       </Box>
 
-      <Typography
-        variant="h5"
-        align="center"
-        sx={{ mb: 2, fontWeight: 'bold' }}
-      >
+      <Typography variant="h5" align="center" sx={{ mb: 2, fontWeight: 'bold' }}>
         Lista de Clientes
       </Typography>
 
-      <Toolbar sx={{ mb: 2 }}>
+      <Toolbar sx={{ mb: 2, backgroundColor: '#fff' }}>
         <TextField
           variant="outlined"
           placeholder="Buscar Cliente..."
@@ -94,9 +90,7 @@ export default function Clientes() {
               ))
             ) : (
               <TableRow>
-                <TableCell align="center">
-                  No se encontraron clientes
-                </TableCell>
+                <TableCell align="center">No se encontraron clientes</TableCell>
               </TableRow>
             )}
           </TableBody>

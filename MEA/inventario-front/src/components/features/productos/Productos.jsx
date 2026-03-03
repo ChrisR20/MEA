@@ -164,15 +164,15 @@ function Productos() {
   };
 
   const formatPrecio = (valor) => {
-      if (valor === null || valor === undefined) return '$ 0';
+    if (valor === null || valor === undefined) return '$ 0';
 
-      return new Intl.NumberFormat('es-AR', {
-        style: 'currency',
-        currency: 'ARS',
-        minimumFractionDigits: 2,
-      }).format(valor);
-    };
-    
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 2,
+    }).format(valor);
+  };
+
   // --------------------------
   // GUARDAR PRODUCTO
   // --------------------------
@@ -279,7 +279,7 @@ function Productos() {
 
       <TableContainer
         component={Paper}
-        sx={{ maxWidth: '95%', mx: 'auto', boxShadow: 3, borderRadius: 2 }}
+        sx={{ maxWidth: '100%', mx: 'auto', boxShadow: 3, borderRadius: 2 }}
       >
         <Table>
           <TableHead sx={{ bgcolor: '#eae7a4' }}>
