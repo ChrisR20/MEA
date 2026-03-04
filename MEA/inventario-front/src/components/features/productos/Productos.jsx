@@ -15,20 +15,13 @@ import {
   TextField,
   Box,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Stack,
   Snackbar,
   Alert,
-  Stack,
 } from '@mui/material';
 
 import NavbarPrincipal from '../../NavbarPrincipal';
+import ProductoModal from './ProductoModal';
 import { refreshAccessToken } from '../../utils/auth';
 import { isSessionValid, clearSession } from '../../../utils/session';
 
@@ -41,29 +34,14 @@ function Productos() {
   const [marcas, setMarcas] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [openModal, setOpenModal] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [toastMsg, setToastMsg] = useState('');
   const [productoEditar, setProductoEditar] = useState(null);
+  const [toastMsg, setToastMsg] = useState('');
 
-  const [nuevoProducto, setNuevoProducto] = useState({
-    nombre_producto: '',
-    marca: '',
-    desc: '',
-    color: '',
-    aroma: '',
-    cantidad: '',
-    peso_neto: '',
-    codigo: '',
-    precio: '',
-  });
-
-  // --- Manejo de Logout ---
   const handleLogout = () => {
     clearSession();
     navigate('/login', { replace: true });
   };
 
-  // --- Headers con token para todos los fetch ---
   const getAuthHeaders = () => {
     const token = localStorage.getItem('access_token');
     return {
@@ -72,7 +50,6 @@ function Productos() {
     };
   };
 
-  // --- Fetch Genérico con refresh de token ---
   const fetchWithAuth = async (url, options = {}) => {
     if (!isSessionValid()) return handleLogout();
 
@@ -85,33 +62,24 @@ function Productos() {
     if (res.status === 401) {
       const newToken = await refreshAccessToken();
       if (!newToken) return handleLogout();
-
       options.headers.Authorization = `Bearer ${newToken}`;
       res = await fetch(url, options);
     }
-
     return res;
   };
 
-  // --- Fetch Productos ---
   const fetchProductos = async () => {
     const res = await fetchWithAuth(`${API_URL}/api/productos/`);
     if (res.ok) {
       const data = await res.json();
       setProductos(Array.isArray(data) ? data : []);
-    } else {
-      setProductos([]);
-    }
+    } else setProductos([]);
   };
 
-  // --- Fetch Marcas ---
   const fetchMarcas = async () => {
     const res = await fetchWithAuth(`${API_URL}/api/marcas/`);
-    if (res.ok) {
-      setMarcas(await res.json());
-    } else {
-      setMarcas([]);
-    }
+    if (res.ok) setMarcas(await res.json());
+    else setMarcas([]);
   };
 
   useEffect(() => {
@@ -123,60 +91,13 @@ function Productos() {
     init();
   }, []);
 
-  // -------------------------
-  // MODAL
-  // -------------------------
-  const handleOpenModal = () => setOpenModal(true);
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setProductoEditar(null);
-    resetNuevoProducto();
-    setErrorMsg('');
+  const handleOpenModal = (producto = null) => {
+    setProductoEditar(producto);
+    setOpenModal(true);
   };
+  const handleCloseModal = () => setOpenModal(false);
 
-  const resetNuevoProducto = () => {
-    setNuevoProducto({
-      nombre_producto: '',
-      marca: '',
-      desc: '',
-      color: '',
-      aroma: '',
-      cantidad: '',
-      peso_neto: '',
-      codigo: '',
-      precio: '',
-    });
-  };
-
-  const handleChange = (e) => {
-    let value = e.target.value;
-    if (e.target.name === 'marca') value = parseInt(value, 10);
-    setNuevoProducto({ ...nuevoProducto, [e.target.name]: value });
-  };
-
-  const handleEditProducto = (p) => {
-    setProductoEditar(p);
-    setNuevoProducto({
-      ...p,
-      marca: p.marca?.id || p.marca || '',
-    });
-    handleOpenModal();
-  };
-
-  const formatPrecio = (valor) => {
-    if (valor === null || valor === undefined) return '$ 0';
-
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 2,
-    }).format(valor);
-  };
-
-  // --------------------------
-  // GUARDAR PRODUCTO
-  // --------------------------
-  const handleSaveProducto = async () => {
+  const handleSaveProducto = async (nuevoProducto) => {
     const body = {
       nombre_producto: nuevoProducto.nombre_producto || '',
       marca: nuevoProducto.marca || null,
@@ -209,7 +130,7 @@ function Productos() {
         setToastMsg(productoEditar ? 'Producto editado correctamente' : 'Producto creado');
       } else {
         const errorData = await res.json();
-        setErrorMsg(
+        setToastMsg(
           errorData.non_field_errors?.[0] ||
             errorData.nombre_producto?.[0] ||
             errorData.marca?.[0] ||
@@ -217,7 +138,7 @@ function Productos() {
         );
       }
     } catch (err) {
-      setErrorMsg('Error al comunicarse con el servidor');
+      setToastMsg('Error al comunicarse con el servidor');
     }
   };
 
@@ -225,9 +146,15 @@ function Productos() {
     p.nombre_producto.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  // -------------------------
-  // RENDER
-  // -------------------------
+  const formatPrecio = (valor) => {
+    if (valor === null || valor === undefined) return '$ 0';
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 2,
+    }).format(valor);
+  };
+
   return (
     <Box
       sx={{
@@ -256,7 +183,7 @@ function Productos() {
           >
             <Button
               variant="contained"
-              onClick={handleOpenModal}
+              onClick={() => handleOpenModal()}
               sx={{ bgcolor: '#a8d5ba', color: '#2f4f4f', '&:hover': { bgcolor: '#8bc39f' } }}
             >
               Agregar Producto
@@ -323,7 +250,7 @@ function Productos() {
                   <TableCell>{formatPrecio(p.precio)}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" size="small" onClick={() => handleEditProducto(p)}>
+                      <Button variant="outlined" size="small" onClick={() => handleOpenModal(p)}>
                         Editar
                       </Button>
                     </Stack>
@@ -335,91 +262,13 @@ function Productos() {
         </Table>
       </TableContainer>
 
-      {/* MODAL */}
-      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
-        <DialogTitle>{productoEditar ? 'Editar Producto' : 'Agregar Producto'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} mt={1}>
-            <FormControl fullWidth>
-              {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
-              <InputLabel>Marca</InputLabel>
-              <Select name="marca" value={nuevoProducto.marca} onChange={handleChange}>
-                {marcas.map((m) => (
-                  <MenuItem key={m.id} value={m.id}>
-                    {m.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              label="Nombre"
-              name="nombre_producto"
-              value={nuevoProducto.nombre_producto}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Descripción"
-              name="desc"
-              value={nuevoProducto.desc}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Color"
-              name="color"
-              value={nuevoProducto.color}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Aroma"
-              name="aroma"
-              value={nuevoProducto.aroma}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Cantidad"
-              name="cantidad"
-              type="number"
-              value={nuevoProducto.cantidad}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Peso Neto"
-              name="peso_neto"
-              value={nuevoProducto.peso_neto}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Código"
-              name="codigo"
-              type="number"
-              value={nuevoProducto.codigo}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Precio"
-              name="precio"
-              type="number"
-              value={nuevoProducto.precio}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal}>Cancelar</Button>
-          <Button variant="contained" onClick={handleSaveProducto}>
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ProductoModal
+        open={openModal}
+        onClose={handleCloseModal}
+        onSave={handleSaveProducto}
+        marcas={marcas}
+        producto={productoEditar}
+      />
 
       <Snackbar
         open={!!toastMsg}
