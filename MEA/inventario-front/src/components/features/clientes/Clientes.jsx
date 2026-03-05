@@ -51,8 +51,8 @@ export default function Clientes() {
   );
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ p: 2, backgroundColor: '#fff' }}>
+      <Box sx={{ mb: 3, backgroundColor: '#fff' }}>
         <NavbarPrincipal />
       </Box>
 
