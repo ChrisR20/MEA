@@ -28,6 +28,7 @@ import NavbarPrincipal from '../../NavbarPrincipal';
 import ProductoModal from './ProductoModal';
 import { refreshAccessToken } from '../../utils/auth';
 import { isSessionValid, clearSession } from '../../../utils/session';
+import BulkProductos from './BulkProductos';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -163,6 +164,27 @@ function Productos() {
     }).format(valor);
   };
 
+  const [openBulkModal, setOpenBulkModal] = useState(false);
+
+  const handleSaveBulkProductos = async (productosArray) => {
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/productos/bulk/`, {
+        method: 'POST',
+        body: JSON.stringify(productosArray),
+      });
+      if (res.ok) {
+        await fetchProductos();
+        setToastMsg('Productos cargados correctamente');
+        setOpenBulkModal(false);
+      } else {
+        const data = await res.json();
+        setToastMsg(JSON.stringify(data));
+      }
+    } catch (err) {
+      setToastMsg('Error al cargar productos masivos');
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -185,28 +207,64 @@ function Productos() {
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             spacing={2}
-            alignItems="center"
+            alignItems={{ xs: 'stretch', sm: 'center' }}
             justifyContent="space-between"
             sx={{ width: '100%' }}
           >
-            <Button
-              variant="contained"
-              onClick={() => handleOpenModal()}
-              sx={{ bgcolor: '#a8d5ba', color: '#2f4f4f', '&:hover': { bgcolor: '#8bc39f' } }}
-            >
-              Agregar Producto
-            </Button>
+            {/* Botones a la izquierda */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              {/* <Button
+                variant="contained"
+                onClick={() => handleOpenModal()}
+                sx={{
+                  bgcolor: '#a8d5ba', // verde pastel
+                  color: '#2f4f4f',
+                  '&:hover': { bgcolor: '#8bc39f' },
+                  fontWeight: 600,
+                  width: { xs: '100%', sm: 'auto' },
+                }}
+              >
+                Agregar Producto
+              </Button> */}
 
-            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+              <Button
+                variant="contained"
+                onClick={() => setOpenBulkModal(true)}
+                sx={{
+                  bgcolor: '#a8d5ba', // verde pastel
+                  color: '#2f4f4f',
+                  '&:hover': { bgcolor: '#8bc39f' },
+                  fontWeight: 600,
+                  width: { xs: '100%', sm: 'auto' },
+                }}
+              >
+                Agregar Productos
+              </Button>
+
+              <BulkProductos
+                open={openBulkModal}
+                onClose={() => setOpenBulkModal(false)}
+                onSave={handleSaveBulkProductos}
+                marcas={marcas}
+              />
+            </Stack>
+
+            {/* Filtros a la derecha */}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+            >
               <TextField
                 variant="outlined"
                 placeholder="Buscar producto..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 size="small"
-                sx={{ maxWidth: 200 }}
+                sx={{ width: { xs: '100%', sm: 200 } }}
               />
-              <FormControl size="small" sx={{ minWidth: 150 }}>
+              <FormControl size="small" sx={{ minWidth: 150, width: { xs: '100%', sm: 'auto' } }}>
                 <InputLabel>Marca</InputLabel>
                 <Select
                   value={marcaSeleccionada}

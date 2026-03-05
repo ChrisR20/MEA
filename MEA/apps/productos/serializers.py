@@ -40,3 +40,23 @@ class StockSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+
+# Serializer bulk
+class StockBulkSerializer(serializers.ListSerializer):
+    child = StockSerializer()
+    allow_empty = False
+
+    def create(self, validated_data):
+        productos = []
+        errors = []
+        for i, item in enumerate(validated_data):
+            try:
+                productos.append(Stock(**item))
+            except Exception as e:
+                errors.append({'index': i, 'error': str(e)})
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return Stock.objects.bulk_create(productos)
