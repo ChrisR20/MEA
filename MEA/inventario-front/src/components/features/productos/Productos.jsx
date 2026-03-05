@@ -18,6 +18,10 @@ import {
   Stack,
   Snackbar,
   Alert,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 import NavbarPrincipal from '../../NavbarPrincipal';
@@ -33,6 +37,7 @@ function Productos() {
   const [productos, setProductos] = useState([]);
   const [marcas, setMarcas] = useState([]);
   const [busqueda, setBusqueda] = useState('');
+  const [marcaSeleccionada, setMarcaSeleccionada] = useState(''); // NUEVO
   const [openModal, setOpenModal] = useState(false);
   const [productoEditar, setProductoEditar] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
@@ -142,9 +147,12 @@ function Productos() {
     }
   };
 
-  const productosFiltrados = productos.filter((p) =>
-    p.nombre_producto.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // FILTRADO por nombre y por marca
+  const productosFiltrados = productos.filter((p) => {
+    const cumpleNombre = p.nombre_producto.toLowerCase().includes(busqueda.toLowerCase());
+    const cumpleMarca = marcaSeleccionada ? p.marca === marcaSeleccionada : true;
+    return cumpleNombre && cumpleMarca;
+  });
 
   const formatPrecio = (valor) => {
     if (valor === null || valor === undefined) return '$ 0';
@@ -188,14 +196,32 @@ function Productos() {
             >
               Agregar Producto
             </Button>
-            <TextField
-              variant="outlined"
-              placeholder="Buscar producto..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              size="small"
-              sx={{ maxWidth: 300, width: '100%' }}
-            />
+
+            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+              <TextField
+                variant="outlined"
+                placeholder="Buscar producto..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                size="small"
+                sx={{ maxWidth: 200 }}
+              />
+              <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel>Marca</InputLabel>
+                <Select
+                  value={marcaSeleccionada}
+                  label="Marca"
+                  onChange={(e) => setMarcaSeleccionada(e.target.value)}
+                >
+                  <MenuItem value="">Todas</MenuItem>
+                  {marcas.map((m) => (
+                    <MenuItem key={m.id} value={m.id}>
+                      {m.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
           </Stack>
         </Toolbar>
       </AppBar>
