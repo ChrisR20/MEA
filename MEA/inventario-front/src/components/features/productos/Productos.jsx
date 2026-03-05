@@ -238,8 +238,8 @@ function Productos() {
           <TableHead sx={{ bgcolor: '#eae7a4' }}>
             <TableRow>
               {[
-                'Producto',
                 'Marca',
+                'Producto',
                 'Descripción',
                 'Color',
                 'Aroma',
@@ -264,9 +264,15 @@ function Productos() {
               </TableRow>
             ) : (
               productosFiltrados.map((p) => (
-                <TableRow key={p.id} hover>
-                  <TableCell>{p.nombre_producto}</TableCell>
+                <TableRow
+                  key={p.id}
+                  hover
+                  sx={{
+                    backgroundColor: p.cantidad === 0 ? '#ffcccc' : 'inherit', // rojo si cantidad 0
+                  }}
+                >
                   <TableCell>{p.marca_nombre}</TableCell>
+                  <TableCell>{p.nombre_producto}</TableCell>
                   <TableCell>{p.desc}</TableCell>
                   <TableCell>{p.color || '-'}</TableCell>
                   <TableCell>{p.aroma || '-'}</TableCell>
