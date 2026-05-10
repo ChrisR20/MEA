@@ -1,10 +1,9 @@
-# Dockerfile frontend React + Vite
-FROM node:20
+# ===== FRONTEND BUILD (VITE + REACT) =====
+FROM node:20 AS build
 
-# Directorio de la app
 WORKDIR /app
 
-# Copiar package.json y package-lock.json primero para cachear dependencias
+# Copiar dependencias primero (cache)
 COPY package*.json ./
 
 # Instalar dependencias
@@ -13,8 +12,22 @@ RUN npm install
 # Copiar todo el proyecto
 COPY . .
 
-# Exponer puerto de Vite
-EXPOSE 5173
+# Variables de entorno en build (IMPORTANTE para Vite)
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
-# Comando por defecto para desarrollo
-CMD ["npm", "run", "dev", "--", "--host"]
+# Construir la app
+RUN npm run build
+
+
+# ===== SERVIR CON NGINX =====
+FROM nginx:alpine
+
+# Copiar build al nginx
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Exponer puerto estándar
+EXPOSE 80
+
+# Levantar nginx
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,16 +1,11 @@
 """
 WSGI config for MEA project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
 """
 
 import os
-
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'MEA.settings')
+# Ajustado para que apunte directamente al archivo production.py en la carpeta MEA
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'MEA.production')
 
 application = get_wsgi_application()

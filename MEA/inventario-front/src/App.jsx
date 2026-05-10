@@ -107,7 +107,8 @@ const Layout = ({ onLogout, username }) => {
             {/* IZQUIERDA: Admin */}
             <Box sx={{ flex: 1 }}>
               {canAccessAdmin && (
-                <Button
+                
+  <Button
                   variant="contained"
                   sx={{
                     bgcolor: hoverColor,
@@ -118,6 +119,8 @@ const Layout = ({ onLogout, username }) => {
                 >
                   Admin
                 </Button>
+               
+
               )}
             </Box>
 

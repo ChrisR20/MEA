@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('apps.productos.urls')),  
+    path('api/', include('apps.productos.urls')),
     path('api/', include('apps.marcas.urls')),
     path('api/', include('apps.clientes.urls')),
     path('api/', include('apps.pedidos.urls')),
@@ -14,4 +14,7 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/admin/', permanent=False)),
 ]
 
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+urlpatterns += static(
+    settings.STATIC_URL,
+    document_root=settings.STATIC_ROOT
+)

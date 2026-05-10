@@ -125,10 +125,11 @@ from pathlib import Path
 # BASE_DIR sigue igual
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-STATIC_URL = '/static/'
 
-# Ruta absoluta que siempre existe dentro del contenedor
-STATICFILES_DIRS = ["/app/MEA/static"]  # Fijo, no relativo
+STATIC_URL = "/static/"
+
+
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
