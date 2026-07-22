@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import {
   Box,
   Button,
@@ -11,52 +10,20 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
-import { setSession } from '../utils/session'; // <-- importamos sesión
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { useLogin } from './useLogin';
 
 const Login = ({ setIsAuthenticated, setUsername }) => {
-  const navigate = useNavigate();
-  const [username, setUsernameInput] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Estado para controlar la visibilidad
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      const response = await fetch(`${API_URL}/accounts/api/token/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('access_token', data.access);
-        localStorage.setItem('refresh_token', data.refresh);
-        localStorage.setItem('username', username);
-        localStorage.setItem('isAuthenticated', 'true');
-
-        setSession(); // <-- guardamos el tiempo de expiración
-
-        setUsername(username);
-        setIsAuthenticated(true);
-        navigate('/dashboard');
-      } else {
-        setError(data.detail || 'Credenciales inválidas');
-      }
-    } catch (err) {
-      setError('Error de conexión con el servidor');
-    }
-  };
-
-  // Función para alternar la visibilidad de la contraseña
-  const handleClickShowPassword = () => setShowPassword((prev) => !prev);
+  const {
+    usernameInput,
+    setUsernameInput,
+    password,
+    setPassword,
+    error,
+    showPassword,
+    handleClickShowPassword,
+    handleSubmit,
+  } = useLogin({ setIsAuthenticated, setUsername });
 
   return (
     <Grid
@@ -106,7 +73,7 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
               label="Usuario"
               autoComplete="username"
               autoFocus
-              value={username}
+              value={usernameInput}
               onChange={(e) => setUsernameInput(e.target.value)}
             />
             <TextField
@@ -115,7 +82,7 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
               fullWidth
               name="password"
               label="Contraseña"
-              type={showPassword ? 'text' : 'password'} // Controlamos el tipo de input
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
               value={password}
@@ -140,7 +107,7 @@ const Login = ({ setIsAuthenticated, setUsername }) => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={!username || !password}
+              disabled={!usernameInput || !password}
             >
               Entrar
             </Button>
