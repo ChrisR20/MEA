@@ -39,6 +39,7 @@ import { refreshAccessToken } from './components/utils/auth';
 import { isSessionValid, clearSession } from './utils/session';
 
 const API_URL = import.meta.env.VITE_API_URL;
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL;
 
 // 🎨 Paleta de colores
 const primaryColor = '#d4af37'; // dorado
@@ -107,20 +108,17 @@ const Layout = ({ onLogout, username }) => {
             {/* IZQUIERDA: Admin */}
             <Box sx={{ flex: 1 }}>
               {canAccessAdmin && (
-                
-  <Button
+                <Button
                   variant="contained"
                   sx={{
                     bgcolor: hoverColor,
                     color: 'white',
                     '&:hover': { bgcolor: hoverColor },
                   }}
-                  onClick={() => window.open(`${API_URL}`, '_blank')}
+                  onClick={() => window.open(ADMIN_URL, '_blank')}
                 >
                   Admin
                 </Button>
-               
-
               )}
             </Box>
 
