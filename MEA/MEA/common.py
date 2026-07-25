@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'apps.marcas',
     'apps.productos',
     'apps.pedidos',
+    'apps.empresas',
 ]
 
 # ========================
