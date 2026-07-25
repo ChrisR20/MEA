@@ -11,10 +11,19 @@ urlpatterns = [
     path('api/', include('apps.clientes.urls')),
     path('api/', include('apps.pedidos.urls')),
     path('accounts/', include('apps.accounts.urls')),
+    path('empresas/', include('apps.empresas.urls')),
     path('', RedirectView.as_view(url='/admin/', permanent=False)),
 ]
 
+# Archivos estáticos
 urlpatterns += static(
     settings.STATIC_URL,
     document_root=settings.STATIC_ROOT
 )
+
+# Archivos subidos por el usuario (logos, etc.)
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    )
