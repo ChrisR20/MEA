@@ -4,53 +4,48 @@ services:
     container_name: mea_db
     restart: always
     environment:
-      POSTGRES_DB: inventario
-      POSTGRES_USER: mea_user
-      POSTGRES_PASSWORD: Choripan1324
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${DB_NAME:-inventario}
+      POSTGRES_USER: ${DB_USER:-mea_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Choripan1324}
     volumes:
-      - postgres_data:/var/lib/postgresql/data/pgadmin
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mea_network
 
   backend:
     build: .
     container_name: mea_backend
-
-    depends_on:
-      - db
     restart: always
-
     ports:
       - "8000:8000"
-
     env_file:
       - ./.env
-
     environment:
       - DJANGO_SETTINGS_MODULE=MEA.production
-
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
+      - DB_HOST=db
+    depends_on:
+      - db
+    networks:
+      - mea_network
     command: >
       sh -c "python manage.py collectstatic --noinput &&
              python manage.py migrate &&
              gunicorn MEA.wsgi:application --bind 0.0.0.0:8000"
 
-    restart: always
-
-
   frontend:
     build: ./inventario-front
     container_name: mea_frontend
-
+    restart: always
     ports:
-      - '5173:5173'
-
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-
-    command: npm run dev -- --host
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - mea_network
 
 volumes:
   postgres_data:
+
+networks:
+  mea_network:
+    driver: bridge

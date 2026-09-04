@@ -4,9 +4,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    # Cambiado a MEA.production para que coincida con tu estructura
     os.environ.setdefault(
-        'DJANGO_SETTINGS_MODULE', 
+        'DJANGO_SETTINGS_MODULE',
         os.getenv('DJANGO_SETTINGS_MODULE', 'MEA.production')
     )
     try:

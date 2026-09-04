@@ -1,0 +1,57 @@
+import os
+from pathlib import Path
+from .common import *
+# ==========================================
+# CONFIGURACIÓN DE HOSTS Y SEGURIDAD
+# =========================================ALLOWED_HOSTS = [
+    "179.43.120.253",
+    "vps-5959267-x.dattaweb.com",
+    "localhost",
+    "127.0.0.1",
+]
+
+# Orígenes permitidos para peticiones CORS (Frontend React)
+CORS_ALLOWED_ORIGINS = [
+    "http://179.43.120.253",
+    "http://vps-5959267-x.dattaweb.com",
+    "http://localhost",
+    "http://127.0.0.1",
+]
+
+# Necesario si usas cookies de CSRF con React/Django en Django 4.0+
+CSRF_TRUSTED_ORIGINS = [
+    "http://179.43.120.253",
+    "http://vps-5959267-x.dattaweb.com",
+]
+
+# Cookies de sesión en HTTP (ya que no usás SSL/HTTPS todavía)
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
+# Redirecciones post-login/logout (vía Nginx en puerto 80)
+LOGIN_REDIRECT_URL = "http://179.43.120.253/dashboard"
+LOGOUT_REDIRECT_URL = "http://179.43.120.253/login"
+
+# ==========================================
+# CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS Y MEDIA
+# ==========================================
+# Esto obliga a Django a generar rutas relativas (/static/...) en vez de localhost:8000
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# ==========================================
+# EMAIL CONFIGURACION PRODUCCION
+# ==========================================
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+
+EMAIL_HOST_USER = "Chriskwonvip@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+DEFAULT_FROM_EMAIL = "noreply@mea.local"
