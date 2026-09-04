@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
 
@@ -39,28 +38,41 @@ import { refreshAccessToken } from './components/utils/auth';
 import { isSessionValid, clearSession } from './utils/session';
 
 const API_URL = import.meta.env.VITE_API_URL;
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL;
 
-// 🎨 Paleta de colores
-const primaryColor = '#d4af37'; // dorado
+// 🎨 Paleta de colores por defecto
+const defaultPrimaryColor = '#d4af37'; // dorado por defecto
 const hoverColor = '#cdaa25';
 const backgroundColor = '#fafafa';
 const cardBg = '#ffffff';
 
 // ------------------------
-// Layout con Navbar
+// Función para formatear URLs externas de forma segura
+// ------------------------
+const formatExternalUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `https://${url}`;
+};
+
+// ------------------------
+// Layout con Navbar Dinámico
 // ------------------------
 const Layout = ({ onLogout, username }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [canAccessAdmin, setCanAccessAdmin] = useState(false);
 
+  // 🏢 Estado para la información de la Empresa
+  const [empresa, setEmpresa] = useState(null);
+
   useEffect(() => {
-    const checkPermission = async () => {
+    const fetchData = async () => {
       try {
-        // Traemos el token de localStorage
         let token = localStorage.getItem('accessToken');
 
-        // Si tienes refresh token, lo renovamos si es necesario
         if (!token) {
           token = await refreshAccessToken();
         }
@@ -70,66 +82,91 @@ const Layout = ({ onLogout, username }) => {
           return;
         }
 
-        const res = await fetch(`${API_URL}/accounts/api/is-permission/`, {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        };
+
+        // 1. Verificación de permisos de admin
+        const resPerms = await fetch(`${API_URL}/accounts/api/is-permission/`, {
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
         });
 
-        if (!res.ok) {
-          console.error('Error verificando permisos:', res.status, res.statusText);
+        if (resPerms.ok) {
+          const dataPerms = await resPerms.json();
+          setCanAccessAdmin(dataPerms.hasPermission);
+        } else {
           setCanAccessAdmin(false);
-          return;
         }
 
-        const data = await res.json();
-        setCanAccessAdmin(data.hasPermission);
+        // 2. Consulta de los datos de la Empresa
+        const resEmpresa = await fetch(`${API_URL}/api/empresa/`, {
+          method: 'GET',
+          headers,
+        });
+
+        if (resEmpresa.ok) {
+          const dataEmpresa = await resEmpresa.json();
+          setEmpresa(Array.isArray(dataEmpresa) ? dataEmpresa[0] : dataEmpresa);
+        }
       } catch (err) {
-        console.error('Error verificando permisos:', err);
+        console.error('Error al cargar datos en el Layout:', err);
         setCanAccessAdmin(false);
       }
     };
 
-    checkPermission();
+    fetchData();
   }, []);
 
   const hideNavbarRoutes = ['/login'];
   const hideNavbar = hideNavbarRoutes.some((path) => location.pathname.startsWith(path));
 
+  // Determinar color de la Navbar (color guardado en BD o fallback)
+  const navbarBgColor = empresa?.color || defaultPrimaryColor;
+
+  // Lógica para saber a qué URL redirigir al hacer clic en el botón
+  const targetUrl = empresa?.url ? formatExternalUrl(empresa.url) : ADMIN_URL;
+
+  // Renderizar la imagen del logo (Soporta Base64, URLs completas o rutas relativas de Django)
+  const getLogoSrc = (logo) => {
+    if (!logo) return '';
+    if (logo.startsWith('data:') || logo.startsWith('http://') || logo.startsWith('https://')) {
+      return logo;
+    }
+    return `${API_URL}${logo.startsWith('/') ? '' : '/'}${logo}`;
+  };
+
   return (
     <>
       <CssBaseline />
       {!hideNavbar && (
-        <AppBar position="static" sx={{ backgroundColor: primaryColor }}>
-          <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            {/* IZQUIERDA: Admin */}
-            <Box sx={{ flex: 1 }}>
-              {canAccessAdmin && (
-                
-  <Button
-                  variant="contained"
-                  sx={{
-                    bgcolor: hoverColor,
-                    color: 'white',
-                    '&:hover': { bgcolor: hoverColor },
-                  }}
-                  onClick={() => window.open(`${API_URL}`, '_blank')}
-                >
-                  Admin
-                </Button>
-               
-
-              )}
+        <AppBar position="static" sx={{ backgroundColor: navbarBgColor }}>
+          <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* IZQUIERDA: Logo + Nombre de la empresa + Botón a la URL de la Empresa */}
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+              {/* Botón redirige a la URL configurada en el backend */}
+              <Button
+                variant="contained"
+                size="small"
+                sx={{
+                  bgcolor: hoverColor,
+                  color: 'white',
+                  '&:hover': { bgcolor: hoverColor },
+                  ml: 1,
+                }}
+                onClick={() => window.open(targetUrl, '_blank')}
+              >
+                ADMIN
+              </Button>
             </Box>
 
-            {/* CENTRO: Hola usuario */}
+            {/* CENTRO: Saludo usuario */}
             <Box sx={{ flex: 1, textAlign: 'center' }}>
               <Typography variant="h6">Bienvenido {username}</Typography>
             </Box>
 
-            {/* DERECHA: Salir */}
+            {/* DERECHA: Botón Salir */}
             <Box sx={{ flex: 1, textAlign: 'right' }}>
               <Button
                 variant="contained"
@@ -172,19 +209,19 @@ const Dashboard = () => {
       label: 'Productos',
       subtitle: 'Ver y gestionar inventario',
       to: '/productos',
-      icon: <InventoryIcon sx={{ fontSize: 40, color: primaryColor }} />,
+      icon: <InventoryIcon sx={{ fontSize: 40, color: defaultPrimaryColor }} />,
     },
     {
       label: 'Pedidos',
       subtitle: 'Ver y crear pedidos',
       to: '/pedidos',
-      icon: <LocalShippingIcon sx={{ fontSize: 40, color: primaryColor }} />,
+      icon: <LocalShippingIcon sx={{ fontSize: 40, color: defaultPrimaryColor }} />,
     },
     {
       label: 'Clientes',
       subtitle: 'Lista de clientes',
       to: '/clientes',
-      icon: <PeopleIcon sx={{ fontSize: 40, color: primaryColor }} />,
+      icon: <PeopleIcon sx={{ fontSize: 40, color: defaultPrimaryColor }} />,
     },
   ];
 
@@ -217,7 +254,7 @@ const Dashboard = () => {
               <CardContent>
                 <Box
                   sx={{
-                    backgroundColor: `${primaryColor}15`,
+                    backgroundColor: `${defaultPrimaryColor}15`,
                     borderRadius: '50%',
                     width: 80,
                     height: 80,

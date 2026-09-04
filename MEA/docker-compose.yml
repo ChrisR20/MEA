@@ -37,19 +37,20 @@ services:
              python manage.py migrate &&
              gunicorn MEA.wsgi:application --bind 0.0.0.0:8000"
 
+    restart: always
+
+
   frontend:
     build: ./inventario-front
     container_name: mea_frontend
 
     ports:
-      - "80:80"
+      - '5173:5173'
 
-    depends_on:
-      - db
-      - backend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
 
-    env_file:
-      - ./.env
+    command: npm run dev -- --host
 
 volumes:
   postgres_data:
